@@ -42,10 +42,10 @@ compileJava {
     // come to mind are simple-graphs and jdkgdxds). Note that Java 20 (and almost
     // certainly higher versions) cannot build with a release set to 7; set it to 8
     // or higher if you expect anyone to build with Java 20 or 21.
-    sourceCompatibility = 7
-    targetCompatibility = 7
+    sourceCompatibility =11
+    targetCompatibility = 11
     if (JavaVersion.current().isJava9Compatible()) {
-        options.release.set(7)
+        options.release.set(11)
     }
 }
 
@@ -53,10 +53,10 @@ compileTestJava {
 	// LWJGL3 needs Java 8 starting in libGDX 1.11.0, which forces tests that use LWJGL3
 	// to use Java 8 or higher. Using options.release enforces compatibility with Java 8,
 	// including how NIO Buffers behave (which broke compatibility in Java 9).
-    sourceCompatibility = 8
-    targetCompatibility = 8
+    sourceCompatibility = 11
+    targetCompatibility = 11
     if (JavaVersion.current().isJava9Compatible()) {
-        options.release.set(8)
+        options.release.set(11)
     }
 }
 
@@ -90,6 +90,9 @@ dependencies {
     // Libraries that don't use libGDX directly can change the next line
     // from `api` to `testImplementation` .
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    api "space.earlygrey:shapedrawer:$shapeDrawerVersion"
+    api "org.mini2Dx:universal-tween-engine:$universalTweenVersion"
+    api "com.github.tommyettinger:formic:$formicVersion"
     testImplementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
     testImplementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
     testImplementation "junit:junit:4.13.2"
