@@ -1,10 +1,10 @@
 package zendo.games.zenlib.utils;
 
-import zendo.games.zenlib.screens.BaseScreen;
+import zendo.games.zenlib.screens.ZenScreen;
 
 public class DebugOverlay {
 
-    public static void render(BaseScreen screen) {
+    public static void render(ZenScreen screen) {
 //        var batch = screen.assets.batch;
 //        var layout = screen.assets.layout;
 //        var font = Font.playpen_sans_sm.font;

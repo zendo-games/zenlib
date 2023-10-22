@@ -1,0 +1,147 @@
+package zendo.games.zenlib;
+
+import aurelienribon.tweenengine.Tween;
+import aurelienribon.tweenengine.TweenManager;
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
+import zendo.games.zenlib.screens.ZenScreen;
+import zendo.games.zenlib.utils.Time;
+import zendo.games.zenlib.utils.accessors.*;
+
+public abstract class ZenMain extends ApplicationAdapter {
+
+    /**
+     * Debug flags, toggle these values as needed, or override in project's ZenMain subclass
+     */
+    public static class Debug {
+        public static boolean general = false;
+        public static boolean shaders = false;
+    }
+
+    /**
+     * Window settings, override these values if desired in project's ZenMain subclass
+     */
+    public static class Window {
+        public static int width = 1280;
+        public static int height = 720;
+        public static String title = "zenlib";
+    }
+
+    public static ZenMain game;
+
+    public ZenAssets assets;
+    public TweenManager tween;
+    public FrameBuffer frameBuffer;
+    public TextureRegion frameBufferRegion;
+    public OrthographicCamera windowCamera;
+
+    // TODO - add screen transition support
+    public ZenScreen screen;
+
+    public ZenMain() {
+        ZenMain.game = this;
+    }
+
+    /**
+     * Override to load project-specific ZenAssets subclass
+     */
+    public abstract void loadAssets();
+
+    /**
+     * Override to load project-specific ZenScreen subclass for initial screen
+     */
+    public abstract void loadInitialScreen();
+
+    @Override
+    public void create() {
+        Time.init();
+
+        tween = new TweenManager();
+        Tween.setWaypointsLimit(4);
+        Tween.setCombinedAttributesLimit(4);
+        Tween.registerAccessor(Color.class, new ColorAccessor());
+        Tween.registerAccessor(Rectangle.class, new RectangleAccessor());
+        Tween.registerAccessor(Vector2.class, new Vector2Accessor());
+        Tween.registerAccessor(Vector3.class, new Vector3Accessor());
+        Tween.registerAccessor(OrthographicCamera.class, new CameraAccessor());
+
+        frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888, Window.width, Window.height, true);
+        var texture = frameBuffer.getColorBufferTexture();
+        texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        frameBufferRegion = new TextureRegion(texture);
+        frameBufferRegion.flip(false, true);
+
+        windowCamera = new OrthographicCamera();
+        windowCamera.setToOrtho(false, Window.width, Window.height);
+        windowCamera.update();
+
+        loadAssets();
+        loadInitialScreen();
+    }
+
+    @Override
+    public void dispose() {
+        frameBuffer.dispose();
+        assets.dispose();
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        if (screen != null) {
+            screen.resize(width, height);
+        }
+    }
+
+    public void update() {
+        // handle global input
+        // TODO - might not want to keep these
+        {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                Gdx.app.exit();
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.F1)) {
+                Debug.general = !Debug.general;
+            }
+        }
+
+        // update things that must update every tick
+        {
+            Time.update();
+            tween.update(Time.delta);
+            screen.alwaysUpdate(Time.delta);
+        }
+
+        // handle a pause
+        if (Time.pause_timer > 0) {
+            Time.pause_timer -= Time.delta;
+            if (Time.pause_timer <= -0.0001f) {
+                Time.delta = -Time.pause_timer;
+            } else {
+                // skip updates if we're paused
+                return;
+            }
+        }
+        Time.millis += (long) Time.delta;
+        Time.previous_elapsed = Time.elapsed_millis();
+
+        // update normally (if not paused)
+        screen.update(Time.delta);
+    }
+
+    @Override
+    public void render() {
+        update();
+        screen.render(assets.batch);
+    }
+
+}
