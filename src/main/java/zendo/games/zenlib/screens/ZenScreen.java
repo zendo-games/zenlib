@@ -67,9 +67,9 @@ public abstract class ZenScreen implements Disposable {
 
     protected void initializeUI() {
 //        skin = VisUI.getSkin();
-//
-//        var viewport = new ScreenViewport(windowCamera);
-//        uiStage = new Stage(viewport, batch);
+
+        var viewport = new ScreenViewport(windowCamera);
+        uiStage = new Stage(viewport, batch);
 
         // extend and setup any per-screen ui widgets in here...
     }

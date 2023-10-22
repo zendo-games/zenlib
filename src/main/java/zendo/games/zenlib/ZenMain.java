@@ -28,15 +28,6 @@ public abstract class ZenMain extends ApplicationAdapter {
         public static boolean shaders = false;
     }
 
-    /**
-     * Window settings, override these values if desired in project's ZenMain subclass
-     */
-    public static class Window {
-        public static int width = 1280;
-        public static int height = 720;
-        public static String title = "zenlib";
-    }
-
     public static ZenMain game;
 
     public ZenAssets assets;
@@ -47,9 +38,11 @@ public abstract class ZenMain extends ApplicationAdapter {
 
     // TODO - add screen transition support
     public ZenScreen screen;
+    public ZenConfig config;
 
-    public ZenMain() {
+    public ZenMain(ZenConfig config) {
         ZenMain.game = this;
+        this.config = config;
     }
 
     /**
@@ -75,14 +68,14 @@ public abstract class ZenMain extends ApplicationAdapter {
         Tween.registerAccessor(Vector3.class, new Vector3Accessor());
         Tween.registerAccessor(OrthographicCamera.class, new CameraAccessor());
 
-        frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888, Window.width, Window.height, true);
+        frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888, config.window.width, config.window.height, true);
         var texture = frameBuffer.getColorBufferTexture();
         texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         frameBufferRegion = new TextureRegion(texture);
         frameBufferRegion.flip(false, true);
 
         windowCamera = new OrthographicCamera();
-        windowCamera.setToOrtho(false, Window.width, Window.height);
+        windowCamera.setToOrtho(false, config.window.width, config.window.height);
         windowCamera.update();
 
         loadAssets();

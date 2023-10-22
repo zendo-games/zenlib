@@ -42,12 +42,16 @@ public abstract class ZenAssets implements Disposable {
         pixmap.dispose();
         pixelRegion = new TextureRegion(pixelTexture);
 
-        mgr = new AssetManager();
-        loadManagerAssets();
-
         batch = new SpriteBatch();
         shapes = new ShapeDrawer(batch, pixelRegion);
         preferences = Gdx.app.getPreferences(PREFS_NAME);
+
+        mgr = new AssetManager();
+        loadManagerAssets();
+
+        // TODO - add support for sync/async loading
+        mgr.finishLoading();
+        update();
     }
 
     /**
