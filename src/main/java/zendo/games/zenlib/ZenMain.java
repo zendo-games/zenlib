@@ -80,9 +80,9 @@ public abstract class ZenMain extends ApplicationAdapter {
         windowCamera.update();
 
         zenAssets = createAssets();
+        loadVisUI();
         screen = createStartScreen();
 
-        loadVisUI();
         // TODO - setScreen() to handle transitions
     }
 
