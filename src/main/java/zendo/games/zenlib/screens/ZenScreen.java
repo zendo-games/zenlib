@@ -31,7 +31,7 @@ public abstract class ZenScreen implements Disposable {
         this.game = ZenMain.game;
         this.assets = game.assets;
         this.tween = game.tween;
-        this.batch = assets.batch;
+        this.batch = game.assets.batch;
         this.pointerPos = new Vector3();
         this.windowCamera = game.windowCamera;
         this.worldCamera = new OrthographicCamera();

@@ -30,6 +30,7 @@ public abstract class ZenMain extends ApplicationAdapter {
 
     public static ZenMain game;
 
+    // TODO - maybe call this 'zenAssets' or something so we can have a plain `assets` field of the project type in non-library code
     public ZenAssets assets;
     public TweenManager tween;
     public FrameBuffer frameBuffer;
