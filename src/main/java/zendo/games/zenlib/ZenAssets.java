@@ -47,7 +47,9 @@ public abstract class ZenAssets implements Disposable {
         preferences = Gdx.app.getPreferences(PREFS_NAME);
 
         mgr = new AssetManager();
-        mgr.load(ZenMain.instance.config.uiSkinPath, Skin.class);
+        if (ZenMain.instance.config.uiSkinPath != null) {
+            mgr.load(ZenMain.instance.config.uiSkinPath, Skin.class);
+        }
         loadManagerAssets();
 
         // TODO - add support for sync/async loading
