@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.kotcrab.vis.ui.VisUI;
 import zendo.games.zenlib.screens.ZenScreen;
 import zendo.games.zenlib.utils.Time;
@@ -142,11 +143,11 @@ public abstract class ZenMain extends ApplicationAdapter {
     }
 
     private void loadVisUI() {
-        if (config.uiSkin == null) {
+        if (config.uiSkinPath == null) {
             VisUI.load(VisUI.SkinScale.X2);
         } else {
-            VisUI.load(config.uiSkin);
+            // the uiSkinPath should be loaded in assets
+            VisUI.load(zenAssets.mgr.get(config.uiSkinPath, Skin.class));
         }
     }
-
 }

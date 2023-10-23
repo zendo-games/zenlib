@@ -1,11 +1,9 @@
 package zendo.games.zenlib;
 
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-
 public class ZenConfig {
 
     public final Window window;
-    public final Skin uiSkin;
+    public final String uiSkinPath;
 
     public ZenConfig() {
         this("zenlib", 1280, 720, null);
@@ -15,9 +13,9 @@ public class ZenConfig {
         this(title, width, height, null);
     }
 
-    public ZenConfig(String title, int width, int height, Skin uiSkin) {
+    public ZenConfig(String title, int width, int height, String uiSkinPath) {
         this.window = new Window(title, width, height);
-        this.uiSkin = uiSkin;
+        this.uiSkinPath = uiSkinPath;
     }
 
     public static class Window {
