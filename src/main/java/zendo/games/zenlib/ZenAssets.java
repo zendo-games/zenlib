@@ -9,10 +9,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
-import com.kotcrab.vis.ui.VisUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public abstract class ZenAssets implements Disposable {
@@ -33,7 +31,6 @@ public abstract class ZenAssets implements Disposable {
 
     public ZenAssets() {
         initialized = false;
-        VisUI.load(VisUI.SkinScale.X2);
         // create a single pixel texture and associated region
         var pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         {

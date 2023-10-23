@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.kotcrab.vis.ui.VisUI;
 import zendo.games.zenlib.screens.ZenScreen;
 import zendo.games.zenlib.utils.Time;
 import zendo.games.zenlib.utils.accessors.*;
@@ -80,6 +81,8 @@ public abstract class ZenMain extends ApplicationAdapter {
 
         zenAssets = createAssets();
         screen = createStartScreen();
+
+        loadVisUI();
         // TODO - setScreen() to handle transitions
     }
 
@@ -136,6 +139,14 @@ public abstract class ZenMain extends ApplicationAdapter {
     public void render() {
         update();
         screen.render(zenAssets.batch);
+    }
+
+    private void loadVisUI() {
+        if (config.uiSkin == null) {
+            VisUI.load(VisUI.SkinScale.X2);
+        } else {
+            VisUI.load(config.uiSkin);
+        }
     }
 
 }
