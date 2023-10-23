@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import space.earlygrey.shapedrawer.ShapeDrawer;
@@ -46,6 +47,7 @@ public abstract class ZenAssets implements Disposable {
         preferences = Gdx.app.getPreferences(PREFS_NAME);
 
         mgr = new AssetManager();
+        mgr.load(ZenMain.instance.config.uiSkinPath, Skin.class);
         loadManagerAssets();
 
         // TODO - add support for sync/async loading
