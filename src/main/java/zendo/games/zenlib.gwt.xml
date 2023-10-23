@@ -5,7 +5,7 @@
      file (usually called GdxDefinition.gwt.xml) as follows:
 
      <inherits name="com.github.your_name.your_library" />
-	 
+
 	 Obviously, change your_library to match your project and this file's name,
 	 and change the source path below to match the folder next to this. When you
 	 change com.github.your_name to a different package, that also changes the
@@ -23,7 +23,7 @@
 <module>
     <!-- This relative path points to the folder that has sources in it.
          This path is slash-separated and is relative to this file. -->
-    <source path="your_library"/>
+    <source path="zenlib"/>
     <!-- This is a good idea because so much GWT-specific code needs libGDX,
          like the libGDX reflection code. These "inherits" names are period-separated. -->
     <inherits name="com.badlogic.gdx.backends.gdx_backends_gwt" />
