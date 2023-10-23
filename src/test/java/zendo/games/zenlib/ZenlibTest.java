@@ -1,11 +1,9 @@
 package zendo.games.zenlib;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import zendo.games.zenlib.screens.ZenScreen;
-import zendo.games.zenlib.ui.ZenTextButton;
 
 public class ZenlibTest extends ZenMain {
 
@@ -50,9 +48,6 @@ public class ZenlibTest extends ZenMain {
     public static class TestScreen extends ZenScreen<Assets> {
         public TestScreen() {
             super(Assets.class);
-            Gdx.input.setInputProcessor(uiStage);
-            ZenTextButton textButton = new ZenTextButton("Test Button");
-            uiStage.addActor(textButton);
         }
 
         @Override
