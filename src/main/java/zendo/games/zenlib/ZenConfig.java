@@ -2,30 +2,26 @@ package zendo.games.zenlib;
 
 public class ZenConfig {
 
-    public static class Window {
-        public String title;
-        public int width;
-        public int height;
+    public final Window window;
 
-        public Window() {
-            this("zenlib", 1280, 720);
-        }
+    public ZenConfig() {
+        this("zenlib", 1280, 720);
+    }
+
+    public ZenConfig(String title, int width, int height) {
+        this.window = new Window(title, width, height);
+    }
+
+    public static class Window {
+        public final String title;
+        public final int width;
+        public final int height;
 
         public Window(String title, int width, int height) {
             this.title = title;
             this.width = width;
             this.height = height;
         }
-    }
-
-    public final Window window;
-
-    public ZenConfig() {
-        this(new Window());
-    }
-
-    public ZenConfig(Window window) {
-        this.window = window;
     }
 
 }

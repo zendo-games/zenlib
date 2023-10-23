@@ -12,14 +12,13 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import zendo.games.zenlib.ZenAssets;
 import zendo.games.zenlib.ZenMain;
 
-public abstract class ZenScreen implements Disposable {
+public abstract class ZenScreen<AssetsType extends ZenAssets> implements Disposable {
 
-    public final ZenMain game;
-    public final ZenAssets assets;
-    public final TweenManager tween;
+    public final AssetsType assets;
     public final SpriteBatch batch;
-    public final Vector3 pointerPos;
+    public final TweenManager tween;
     public final OrthographicCamera windowCamera;
+    public final Vector3 pointerPos;
 
     protected OrthographicCamera worldCamera;
     protected Viewport viewport;
@@ -27,13 +26,19 @@ public abstract class ZenScreen implements Disposable {
     protected Skin skin;
     protected boolean exitingScreen;
 
-    public ZenScreen() {
-        this.game = ZenMain.game;
-        this.assets = game.assets;
-        this.tween = game.tween;
-        this.batch = game.assets.batch;
+    /**
+     * Create a new ZenScreen instance. This class is parameterized by {@code <AssetsType>}
+     * to enable type-aware access to the main project's subclass of {@code ZenAssets}.
+     *
+     * @param assetsClazz the generic {@code AssetsType} class reference for the client subclass of {@code ZenAssets}
+     */
+    public ZenScreen(Class<AssetsType> assetsClazz) {
+        var main = ZenMain.instance;
+        this.assets = assetsClazz.cast(main.zenAssets);
+        this.batch = assets.batch;
+        this.tween = main.tween;
+        this.windowCamera = main.windowCamera;
         this.pointerPos = new Vector3();
-        this.windowCamera = game.windowCamera;
         this.worldCamera = new OrthographicCamera();
         this.viewport = new ScreenViewport(worldCamera);
         this.exitingScreen = false;
@@ -50,7 +55,7 @@ public abstract class ZenScreen implements Disposable {
 
     /**
      * Update something in the screen even when
-     * Time.pause_for thing is being processed
+     * {@code Time.pause_for()} is being processed
      * @param dt the time in seconds since the last frame
      */
     public void alwaysUpdate(float dt) {}

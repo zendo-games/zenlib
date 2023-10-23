@@ -28,38 +28,37 @@ public abstract class ZenMain extends ApplicationAdapter {
         public static boolean shaders = false;
     }
 
-    public static ZenMain game;
+    public static ZenMain instance;
 
-    // TODO - maybe call this 'zenAssets' or something so we can have a plain `assets` field of the project type in non-library code
-    public ZenAssets assets;
+    public ZenAssets zenAssets;
     public TweenManager tween;
     public FrameBuffer frameBuffer;
     public TextureRegion frameBufferRegion;
     public OrthographicCamera windowCamera;
 
-    // TODO - add screen transition support
     public ZenScreen screen;
     public ZenConfig config;
 
     public ZenMain(ZenConfig config) {
-        ZenMain.game = this;
+        ZenMain.instance = this;
         this.config = config;
     }
 
     /**
-     * Override to load project-specific ZenAssets subclass
+     * Override to create project-specific ZenAssets subclass instance
      */
-    public abstract void loadAssets();
+    public abstract ZenAssets createAssets();
 
     /**
-     * Override to load project-specific ZenScreen subclass for initial screen
+     * Override to create project-specific ZenScreen subclass instance that will be used as the starting screen
      */
-    public abstract void loadInitialScreen();
+    public abstract ZenScreen createStartScreen();
 
     @Override
     public void create() {
         Time.init();
 
+        // TODO - consider moving to ZenAssets
         tween = new TweenManager();
         Tween.setWaypointsLimit(4);
         Tween.setCombinedAttributesLimit(4);
@@ -79,14 +78,15 @@ public abstract class ZenMain extends ApplicationAdapter {
         windowCamera.setToOrtho(false, config.window.width, config.window.height);
         windowCamera.update();
 
-        loadAssets();
-        loadInitialScreen();
+        zenAssets = createAssets();
+        screen = createStartScreen();
+        // TODO - setScreen() to handle transitions
     }
 
     @Override
     public void dispose() {
         frameBuffer.dispose();
-        assets.dispose();
+        zenAssets.dispose();
     }
 
     @Override
@@ -98,7 +98,7 @@ public abstract class ZenMain extends ApplicationAdapter {
 
     public void update() {
         // handle global input
-        // TODO - might not want to keep these
+        // TODO - might not want to keep these in library code
         {
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 Gdx.app.exit();
@@ -135,7 +135,7 @@ public abstract class ZenMain extends ApplicationAdapter {
     @Override
     public void render() {
         update();
-        screen.render(assets.batch);
+        screen.render(zenAssets.batch);
     }
 
 }
