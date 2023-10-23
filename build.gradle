@@ -93,6 +93,7 @@ dependencies {
     api "space.earlygrey:shapedrawer:$shapeDrawerVersion"
     api "org.mini2Dx:universal-tween-engine:$universalTweenVersion"
     api "com.github.tommyettinger:formic:$formicVersion"
+    api "com.kotcrab.vis:vis-ui:$visUiVersion"
     testImplementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
     testImplementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
     testImplementation "junit:junit:4.13.2"
