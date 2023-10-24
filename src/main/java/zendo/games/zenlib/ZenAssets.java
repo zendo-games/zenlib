@@ -25,7 +25,7 @@ public abstract class ZenAssets implements Disposable {
      */
     public static String PREFS_NAME = "zenlib_prefs";
     public final AssetDescriptor ZEN_PATCH_DESCRIPTOR =
-            new AssetDescriptor(Gdx.files.classpath("zendo/games/zenlib/assets/patches/zenpatch.atlas"), TextureAtlas.class);
+            new AssetDescriptor(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
     public final SpriteBatch batch;
     public final ShapeDrawer shapes;
     public final AssetManager mgr;
