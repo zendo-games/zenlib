@@ -26,6 +26,7 @@ public abstract class ZenMain extends ApplicationAdapter {
     public static class Debug {
         public static boolean general = false;
         public static boolean shaders = false;
+        public static boolean ui = false;
     }
 
     public static ZenMain instance;
@@ -80,6 +81,7 @@ public abstract class ZenMain extends ApplicationAdapter {
 
         zenAssets = createAssets();
         screen = createStartScreen();
+
         // TODO - setScreen() to handle transitions
     }
 
@@ -105,6 +107,7 @@ public abstract class ZenMain extends ApplicationAdapter {
             }
             if (Gdx.input.isKeyJustPressed(Input.Keys.F1)) {
                 Debug.general = !Debug.general;
+                Debug.ui = !Debug.ui;
             }
         }
 

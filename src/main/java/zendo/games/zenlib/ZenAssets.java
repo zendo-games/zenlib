@@ -9,8 +9,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import com.kotcrab.vis.ui.VisUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public abstract class ZenAssets implements Disposable {
@@ -31,7 +33,6 @@ public abstract class ZenAssets implements Disposable {
 
     public ZenAssets() {
         initialized = false;
-
         // create a single pixel texture and associated region
         var pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         {
@@ -47,6 +48,12 @@ public abstract class ZenAssets implements Disposable {
         preferences = Gdx.app.getPreferences(PREFS_NAME);
 
         mgr = new AssetManager();
+
+        // load the skin if specified in config
+        if (ZenMain.instance.config.ui.skinPath != null) {
+            mgr.load(ZenMain.instance.config.ui.skinPath, Skin.class);
+        }
+
         loadManagerAssets();
 
         // TODO - add support for sync/async loading
@@ -69,6 +76,7 @@ public abstract class ZenAssets implements Disposable {
     public float update() {
         if (!mgr.update()) return mgr.getProgress();
         if (initialized) return 1;
+        loadVisUI();
         initCachedAssets();
         initialized = true;
         return 1;
@@ -107,4 +115,12 @@ public abstract class ZenAssets implements Disposable {
         return preferences.getString(key, "");
     }
 
+    private void loadVisUI() {
+        if (ZenMain.instance.config.ui.skinPath == null) {
+            VisUI.load(VisUI.SkinScale.X2);
+            Gdx.app.debug("LoadVisUI", "No uiSkinPath specified in ZenConfig, loading default VisUI skin (x2 scale)");
+        } else {
+            VisUI.load(mgr.get(ZenMain.instance.config.ui.skinPath, Skin.class));
+        }
+    }
 }

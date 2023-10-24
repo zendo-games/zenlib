@@ -67,6 +67,7 @@ public class ZenlibTest extends ZenMain {
                         imageWidth, imageHeight);
             }
             batch.end();
+            uiStage.draw();
         }
     }
 
