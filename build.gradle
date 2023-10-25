@@ -66,6 +66,10 @@ javadoc.destinationDir = file('docs/apidocs')
 
 jar {
     archiveBaseName.set(projectName)
+    from('src/main/java/zendo/games/zenlib/assets') {
+        include '*.png'
+        include '*.atlas'
+    }
     manifest {
         attributes 'Implementation-Title': projectName, 'Implementation-Version': archiveVersion
     }
@@ -101,5 +105,3 @@ dependencies {
     // I don't know what conditions may require this to run tests.
     //testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.9.0"
 }
-
-sourceSets.main.resources.srcDirs = [ "src/main/java/zendo/games/zenlib/assets/" ]
