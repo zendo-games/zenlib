@@ -4,7 +4,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.kotcrab.vis.ui.widget.VisTextButton;
-import zendo.games.zenlib.assets.ZenPatch;
 import zendo.games.zenlib.screens.ZenScreen;
 
 public class ZenlibTest extends ZenMain {
@@ -52,7 +51,7 @@ public class ZenlibTest extends ZenMain {
             super(Assets.class);
             var button = new VisTextButton("Test Button");
             button.setPosition(100, 100);
-            button.getStyle().over = ZenPatch.glass_active.ninePatchDrawable;
+            //button.getStyle().over = ZenPatch.glass_active.ninePatchDrawable;
             uiStage.addActor(button);
         }
 

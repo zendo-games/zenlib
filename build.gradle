@@ -101,5 +101,3 @@ dependencies {
     // I don't know what conditions may require this to run tests.
     //testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.9.0"
 }
-
-sourceSets.main.resources.srcDirs = [ "src/main/java/zendo/games/zenlib/assets/" ]

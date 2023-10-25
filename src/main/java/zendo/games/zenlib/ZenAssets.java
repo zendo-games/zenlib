@@ -2,7 +2,6 @@ package zendo.games.zenlib;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
-import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -16,7 +15,6 @@ import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.kotcrab.vis.ui.VisUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
-import zendo.games.zenlib.assets.ZenPatch;
 
 public abstract class ZenAssets implements Disposable {
 
@@ -24,8 +22,7 @@ public abstract class ZenAssets implements Disposable {
      * Override this value in project's ZenAssets subclass!
      */
     public static String PREFS_NAME = "zenlib_prefs";
-    public final AssetDescriptor ZEN_PATCH_DESCRIPTOR =
-            new AssetDescriptor(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
+    //public final AssetDescriptor ZEN_PATCH_DESCRIPTOR = new AssetDescriptor("src/resources/zenpatch.atlas", TextureAtlas.class);
     public final SpriteBatch batch;
     public final ShapeDrawer shapes;
     public final AssetManager mgr;
@@ -60,7 +57,7 @@ public abstract class ZenAssets implements Disposable {
         }
 
         // load the zen patch atlas
-        mgr.load(ZEN_PATCH_DESCRIPTOR);
+        //mgr.load(ZEN_PATCH_DESCRIPTOR);
 
         loadManagerAssets();
 
@@ -85,8 +82,8 @@ public abstract class ZenAssets implements Disposable {
         if (!mgr.update()) return mgr.getProgress();
         if (initialized) return 1;
         loadVisUI();
-        zenPatchAtlas = (TextureAtlas) mgr.get(ZEN_PATCH_DESCRIPTOR);
-        ZenPatch.init(zenPatchAtlas);
+        //zenPatchAtlas = (TextureAtlas) mgr.get(ZEN_PATCH_DESCRIPTOR);
+        //ZenPatch.init(zenPatchAtlas);
         initCachedAssets();
         initialized = true;
         return 1;
