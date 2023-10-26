@@ -84,7 +84,8 @@ public abstract class ZenAssets implements Disposable {
         if (!mgr.update()) return mgr.getProgress();
         if (initialized) return 1;
         loadVisUI();
-        ZenPatch.init(mgr.get(ZEN_PATCH_DESCRIPTOR));
+        zenPatchAtlas = (TextureAtlas) mgr.get(ZEN_PATCH_DESCRIPTOR);
+        ZenPatch.init(zenPatchAtlas);
         initCachedAssets();
         initialized = true;
         return 1;
