@@ -61,7 +61,7 @@ public enum ZenPatch {
 
     public static void init(TextureAtlas atlas) {
         for (var patch : values()) {
-            var regionName = "ninepatch/" + patch.name().replaceAll("_", "-");
+            var regionName = patch.name().replaceAll("_", "-");
             var region = atlas.findRegion(regionName);
             var bounds = patch.bounds;
 

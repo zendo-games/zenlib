@@ -24,14 +24,12 @@ public abstract class ZenAssets implements Disposable {
      * Override this value in project's ZenAssets subclass!
      */
     public static String PREFS_NAME = "zenlib_prefs";
-    public final AssetDescriptor ZEN_PATCH_DESCRIPTOR = new AssetDescriptor(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
+    public final AssetDescriptor<TextureAtlas> ZEN_PATCH_DESCRIPTOR = new AssetDescriptor(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
     public final SpriteBatch batch;
     public final ShapeDrawer shapes;
     public final AssetManager mgr;
     public final Texture pixelTexture;
     public final TextureRegion pixelRegion;
-    public TextureAtlas zenPatchAtlas;
-
     private final Preferences preferences;
     private boolean initialized;
 
@@ -84,8 +82,7 @@ public abstract class ZenAssets implements Disposable {
         if (!mgr.update()) return mgr.getProgress();
         if (initialized) return 1;
         loadVisUI();
-        zenPatchAtlas = (TextureAtlas) mgr.get(ZEN_PATCH_DESCRIPTOR);
-        ZenPatch.init(zenPatchAtlas);
+        ZenPatch.init(mgr.get(ZEN_PATCH_DESCRIPTOR));
         initCachedAssets();
         initialized = true;
         return 1;
