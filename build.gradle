@@ -66,10 +66,6 @@ javadoc.destinationDir = file('docs/apidocs')
 
 jar {
     archiveBaseName.set(projectName)
-    from('src/main/java/zendo/games/zenlib/assets') {
-        include '*.png'
-        include '*.atlas'
-    }
     manifest {
         attributes 'Implementation-Title': projectName, 'Implementation-Version': archiveVersion
     }
