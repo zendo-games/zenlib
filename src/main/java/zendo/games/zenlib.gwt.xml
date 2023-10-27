@@ -28,6 +28,12 @@
          like the libGDX reflection code. These "inherits" names are period-separated. -->
     <inherits name="com.badlogic.gdx.backends.gdx_backends_gwt" />
 
+    <!-- setup library packages/classes that need to be in the reflection cache to be usable in project code -->
+    <!-- NOTE: not sure if all these need to be here or just things we're using reflection utils with, like ZenAssets -->
+    <extend-configuration-property name="gdx.reflect.include" value="zendo.games.zenlib.ZenAssets" />
+    <extend-configuration-property name="gdx.reflect.include" value="zendo.games.zenlib.ZenScreen" />
+    <extend-configuration-property name="gdx.reflect.include" value="zendo.games.zenlib.ZenMain" />
+
     <!-- setup classpath asset files to be accessible to GWT by getting preloaded into assets.txt with the current etag hash -->
     <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/zenpatch.atlas" />
     <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/zenpatch.png" />
