@@ -26,7 +26,7 @@
     <source path="zenlib"/>
     <!-- This is a good idea because so much GWT-specific code needs libGDX,
          like the libGDX reflection code. These "inherits" names are period-separated. -->
-    <inherits name="com.badlogic.gdx.backends.gdx_backends_gwt" />
+<!--    <inherits name="com.badlogic.gdx.backends.gdx_backends_gwt" />-->
 
     <!-- Extend the classpath to include the assets we need to load. -->
     <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/zenpatch.atlas" />
