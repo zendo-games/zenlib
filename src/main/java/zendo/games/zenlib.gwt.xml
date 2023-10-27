@@ -27,4 +27,8 @@
     <!-- This is a good idea because so much GWT-specific code needs libGDX,
          like the libGDX reflection code. These "inherits" names are period-separated. -->
     <inherits name="com.badlogic.gdx.backends.gdx_backends_gwt" />
+
+    <!-- setup classpath asset files to be accessible to GWT by getting preloaded into assets.txt with the current etag hash -->
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/zenpatch.atlas" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/zenpatch.png" />
 </module>
