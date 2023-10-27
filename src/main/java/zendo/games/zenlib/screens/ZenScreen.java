@@ -7,6 +7,8 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.GdxRuntimeException;
+import com.badlogic.gdx.utils.reflect.ClassReflection;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import zendo.games.zenlib.ZenAssets;
@@ -32,9 +34,16 @@ public abstract class ZenScreen<AssetsType extends ZenAssets> implements Disposa
      *
      * @param assetsClazz the generic {@code AssetsType} class reference for the client subclass of {@code ZenAssets}
      */
+    @SuppressWarnings("unchecked")
     public ZenScreen(Class<AssetsType> assetsClazz) {
         var main = ZenMain.instance;
-        this.assets = assetsClazz.cast(main.zenAssets);
+
+        // enforce the generic type parameter for the assets class
+        if (!ClassReflection.isInstance(assetsClazz, main.zenAssets)) {
+            throw new GdxRuntimeException("ZenScreen: zenAssets must be an instance of " + assetsClazz.getSimpleName());
+        }
+
+        this.assets = (AssetsType) main.zenAssets;
         this.batch = assets.batch;
         this.tween = main.tween;
         this.windowCamera = main.windowCamera;
