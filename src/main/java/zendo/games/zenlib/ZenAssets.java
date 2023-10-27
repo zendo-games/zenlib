@@ -2,11 +2,13 @@ package zendo.games.zenlib;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -14,6 +16,7 @@ import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.kotcrab.vis.ui.VisUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
+import zendo.games.zenlib.assets.ZenPatch;
 
 public abstract class ZenAssets implements Disposable {
 
@@ -21,13 +24,12 @@ public abstract class ZenAssets implements Disposable {
      * Override this value in project's ZenAssets subclass!
      */
     public static String PREFS_NAME = "zenlib_prefs";
-
+    public final AssetDescriptor<TextureAtlas> ZEN_PATCH_DESCRIPTOR = new AssetDescriptor(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
     public final SpriteBatch batch;
     public final ShapeDrawer shapes;
     public final AssetManager mgr;
     public final Texture pixelTexture;
     public final TextureRegion pixelRegion;
-
     private final Preferences preferences;
     private boolean initialized;
 
@@ -54,6 +56,9 @@ public abstract class ZenAssets implements Disposable {
             mgr.load(ZenMain.instance.config.ui.skinPath, Skin.class);
         }
 
+        // load the zen patch atlas
+        mgr.load(ZEN_PATCH_DESCRIPTOR);
+
         loadManagerAssets();
 
         // TODO - add support for sync/async loading
@@ -77,6 +82,7 @@ public abstract class ZenAssets implements Disposable {
         if (!mgr.update()) return mgr.getProgress();
         if (initialized) return 1;
         loadVisUI();
+        ZenPatch.init(mgr.get(ZEN_PATCH_DESCRIPTOR));
         initCachedAssets();
         initialized = true;
         return 1;
