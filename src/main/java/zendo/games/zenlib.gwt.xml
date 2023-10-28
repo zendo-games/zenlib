@@ -35,6 +35,25 @@
     <extend-configuration-property name="gdx.reflect.include" value="zendo.games.zenlib.ZenMain" />
 
     <!-- setup classpath asset files to be accessible to GWT by getting preloaded into assets.txt with the current etag hash -->
+
+    <!-- ninepatch files -->
     <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/zenpatch.atlas" />
     <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/zenpatch.png" />
+
+    <!-- shaders -->
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/default.vert" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/blinds.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/circlecrop.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/crosshatch.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/cube.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/dissolve.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/doomdrip.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/doorway.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/dreamy.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/heart.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/pixelize.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/radial.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/ripple.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/simplezoom.frag" />
+    <extend-configuration-property name="gdx.files.classpath" value="zendo/games/zenlib/assets/shaders/transitions/stereo.frag" />
 </module>

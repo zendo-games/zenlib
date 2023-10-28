@@ -1,19 +1,20 @@
 package zendo.games.zenlib;
 
+import aurelienribon.tweenengine.Timeline;
 import aurelienribon.tweenengine.Tween;
 import aurelienribon.tweenengine.TweenManager;
+import aurelienribon.tweenengine.primitives.MutableFloat;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import zendo.games.zenlib.assets.ZenTransitionShader;
 import zendo.games.zenlib.screens.ZenScreen;
 import zendo.games.zenlib.utils.Time;
 import zendo.games.zenlib.utils.accessors.*;
@@ -37,8 +38,34 @@ public abstract class ZenMain extends ApplicationAdapter {
     public TextureRegion frameBufferRegion;
     public OrthographicCamera windowCamera;
 
-    public ZenScreen screen;
+    private static class ZenScreens {
+        ZenScreen current;
+        ZenScreen next;
+    }
+    private final ZenScreens screens = new ZenScreens();
+
     public ZenConfig config;
+
+    private static class Transition {
+        static final float DEFAULT_SPEED = 0.66f;
+
+        boolean active;
+        MutableFloat percent;
+        ShaderProgram shader;
+
+        static class FrameBuffers {
+            FrameBuffer from;
+            FrameBuffer to;
+        }
+        final FrameBuffers fbo = new FrameBuffers();
+
+        static class Textures {
+            Texture from;
+            Texture to;
+        }
+        final Textures tex = new Textures();
+    }
+    private final Transition transition = new Transition();
 
     public ZenMain(ZenConfig config) {
         ZenMain.instance = this;
@@ -80,9 +107,15 @@ public abstract class ZenMain extends ApplicationAdapter {
         windowCamera.update();
 
         zenAssets = createAssets();
-        screen = createStartScreen();
+        setScreen(createStartScreen());
 
         // TODO - setScreen() to handle transitions
+        transition.active = false;
+        transition.percent = new MutableFloat(0);
+        transition.fbo.from = new FrameBuffer(Pixmap.Format.RGBA8888, config.window.width, config.window.height, false);
+        transition.fbo.to = new FrameBuffer(Pixmap.Format.RGBA8888, config.window.width, config.window.height, false);
+        transition.tex.from = transition.fbo.from.getColorBufferTexture();
+        transition.tex.to = transition.fbo.to.getColorBufferTexture();
     }
 
     @Override
@@ -93,8 +126,8 @@ public abstract class ZenMain extends ApplicationAdapter {
 
     @Override
     public void resize(int width, int height) {
-        if (screen != null) {
-            screen.resize(width, height);
+        if (screens.current != null) {
+            screens.current.resize(width, height);
         }
     }
 
@@ -115,7 +148,7 @@ public abstract class ZenMain extends ApplicationAdapter {
         {
             Time.update();
             tween.update(Time.delta);
-            screen.alwaysUpdate(Time.delta);
+            screens.current.alwaysUpdate(Time.delta);
         }
 
         // handle a pause
@@ -132,13 +165,87 @@ public abstract class ZenMain extends ApplicationAdapter {
         Time.previous_elapsed = Time.elapsed_millis();
 
         // update normally (if not paused)
-        screen.update(Time.delta);
+        screens.current.update(Time.delta);
     }
 
     @Override
     public void render() {
         update();
-        screen.render(zenAssets.batch);
+        var batch = zenAssets.batch;
+        screens.current.renderFrameBuffers(batch);
+        if (screens.next != null) {
+            screens.next.update(Time.delta);
+            screens.next.renderFrameBuffers(batch);
+
+            // draw the next screen to the transition buffer
+            transition.fbo.to.begin();
+            {
+                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                screens.next.render(batch);
+            }
+            transition.fbo.to.end();
+
+            // draw the current screen to the original buffer
+            transition.fbo.from.begin();
+            {
+                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                screens.current.render(batch);
+            }
+            transition.fbo.from.end();
+
+            // draw the transition buffer to the screen
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            batch.setShader(transition.shader);
+            batch.setProjectionMatrix(windowCamera.combined);
+            batch.begin();
+            {
+                transition.tex.from.bind(1);
+                transition.shader.setUniformi("u_texture1", 1);
+
+                transition.tex.to.bind(0);
+                transition.shader.setUniformi("u_texture", 0);
+
+                transition.shader.setUniformf("u_percent", transition.percent.floatValue());
+
+                batch.setColor(Color.WHITE);
+                batch.draw(transition.tex.to, 0,0, config.window.width, config.window.height);
+            }
+            batch.end();
+            batch.setShader(null);
+        } else {
+            screens.current.render(batch);
+        }
+    }
+
+    public void setScreen(ZenScreen currentScreen) {
+        setScreen(currentScreen, null, Transition.DEFAULT_SPEED);
+    }
+
+    public void setScreen(final ZenScreen newScreen, ZenTransitionShader type, float transitionSpeed) {
+        // only one transition at a time
+        if (transition.active) return;
+        if (screens.next != null) return;
+
+        if (screens.current == null) {
+            // no current screen set, go ahead and set it
+            screens.current = newScreen;
+        } else {
+            // current screen is active, so trigger transition to new screen
+            transition.active = true;
+            transition.percent.setValue(0);
+            transition.shader = (type != null) ? type.shader : ZenTransitionShader.random();
+
+            Timeline.createSequence()
+                    .pushPause(.1f)
+                    .push(Tween.call((i, baseTween) -> screens.next = newScreen))
+                    .push(Tween.to(transition.percent, 0, transitionSpeed).target(1))
+                    .push(Tween.call((i, baseTween) -> {
+                        screens.current = screens.next;
+                        screens.next = null;
+                        transition.active = false;
+                    }))
+                    .start(tween);
+        }
     }
 
 }
