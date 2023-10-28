@@ -122,6 +122,7 @@ public abstract class ZenMain extends ApplicationAdapter {
     public void dispose() {
         frameBuffer.dispose();
         zenAssets.dispose();
+        instance.screens.current.dispose();
     }
 
     @Override
