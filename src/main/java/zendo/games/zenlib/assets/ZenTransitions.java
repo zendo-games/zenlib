@@ -5,8 +5,8 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import zendo.games.zenlib.ZenMain;
 
-public enum ZenShader {
-    blinds
+public enum ZenTransitions {
+      blinds
     , circle_crop
     , crosshatch
     , cube
@@ -24,7 +24,7 @@ public enum ZenShader {
     public ShaderProgram shader;
     public static boolean initialized = false;
 
-    ZenShader() {
+    ZenTransitions() {
         this.shader = null;
     }
 
@@ -48,14 +48,14 @@ public enum ZenShader {
 
     public static ShaderProgram loadShader(String vertSourcePath, String fragSourcePath) {
         ShaderProgram.pedantic = false;
-        ShaderProgram shaderProgram = new ShaderProgram(
+        var shaderProgram = new ShaderProgram(
                 Gdx.files.classpath("zendo/games/zenlib/assets/" + vertSourcePath),
                 Gdx.files.classpath("zendo/games/zenlib/assets/" + fragSourcePath));
-        String log = shaderProgram.getLog();
+        var log = shaderProgram.getLog();
 
         if (!shaderProgram.isCompiled()) {
-            Gdx.app.error("LoadShader", "compilation failed:\n" + log);
-            throw new GdxRuntimeException("LoadShader: compilation failed:\n" + log);
+            throw new GdxRuntimeException("LoadShader: compilation failed for "
+                    + "'" + vertSourcePath + "' and '" + fragSourcePath + "':\n" + log);
         } else if (ZenMain.Debug.shaders) {
             Gdx.app.debug("LoadShader", "ShaderProgram compilation log: " + log);
         }

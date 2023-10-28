@@ -15,15 +15,14 @@ import com.badlogic.gdx.utils.Disposable;
 import com.kotcrab.vis.ui.VisUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 import zendo.games.zenlib.assets.ZenPatch;
-import zendo.games.zenlib.assets.ZenTransitionShader;
+import zendo.games.zenlib.assets.ZenTransitions;
 
 public abstract class ZenAssets implements Disposable {
 
-    /**
-     * Override this value in project's ZenAssets subclass!
-     */
+    public static final AssetDescriptor<TextureAtlas> ZEN_PATCH_DESCRIPTOR = new AssetDescriptor<>(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
+
     public static String PREFS_NAME = "zenlib_prefs";
-    public final AssetDescriptor<TextureAtlas> ZEN_PATCH_DESCRIPTOR = new AssetDescriptor(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
+
     public final SpriteBatch batch;
     public final ShapeDrawer shapes;
     public final AssetManager mgr;
@@ -80,9 +79,7 @@ public abstract class ZenAssets implements Disposable {
     public float initialize() {
         if (!mgr.update()) return mgr.getProgress();
         if (initialized) return 1;
-        loadVisUI();
-        ZenPatch.init(mgr.get(ZEN_PATCH_DESCRIPTOR));
-        ZenTransitionShader.init();
+        loadLibraryAssets();
         initCachedAssets();
         initialized = true;
         return 1;
@@ -104,12 +101,20 @@ public abstract class ZenAssets implements Disposable {
         return preferences.getString(key, "");
     }
 
+    private void loadLibraryAssets() {
+        loadVisUI();
+        ZenPatch.init(mgr.get(ZEN_PATCH_DESCRIPTOR));
+        ZenTransitions.init();
+    }
+
     private void loadVisUI() {
-        if (ZenMain.instance.config.ui.skinPath == null) {
+        var path = ZenMain.instance.config.ui.skinPath;
+        if (path == null) {
             VisUI.load(VisUI.SkinScale.X2);
             Gdx.app.debug("LoadVisUI", "No uiSkinPath specified in ZenConfig, loading default VisUI skin (x2 scale)");
         } else {
-            VisUI.load(mgr.get(ZenMain.instance.config.ui.skinPath, Skin.class));
+            VisUI.load(mgr.get(path, Skin.class));
         }
     }
+
 }

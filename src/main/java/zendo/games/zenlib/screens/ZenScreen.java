@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.reflect.ClassReflection;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.kotcrab.vis.ui.VisUI;
 import zendo.games.zenlib.ZenAssets;
 import zendo.games.zenlib.ZenMain;
 
@@ -80,7 +81,7 @@ public abstract class ZenScreen<AssetsType extends ZenAssets> implements Disposa
     public abstract void render(SpriteBatch batch);
 
     protected void initializeUI() {
-//        skin = VisUI.getSkin();
+        skin = VisUI.getSkin();
 
         var viewport = new ScreenViewport(windowCamera);
         uiStage = new Stage(viewport, batch);
