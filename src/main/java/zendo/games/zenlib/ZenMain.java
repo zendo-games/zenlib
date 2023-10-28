@@ -38,11 +38,11 @@ public abstract class ZenMain extends ApplicationAdapter {
     public TextureRegion frameBufferRegion;
     public OrthographicCamera windowCamera;
 
-    private static class ZenScreens {
+    public static class ZenScreens {
         ZenScreen current;
         ZenScreen next;
     }
-    private final ZenScreens screens = new ZenScreens();
+    public final ZenScreens screens = new ZenScreens();
 
     public ZenConfig config;
 
@@ -107,15 +107,15 @@ public abstract class ZenMain extends ApplicationAdapter {
         windowCamera.update();
 
         zenAssets = createAssets();
-        setScreen(createStartScreen());
 
-        // TODO - setScreen() to handle transitions
         transition.active = false;
         transition.percent = new MutableFloat(0);
         transition.fbo.from = new FrameBuffer(Pixmap.Format.RGBA8888, config.window.width, config.window.height, false);
         transition.fbo.to = new FrameBuffer(Pixmap.Format.RGBA8888, config.window.width, config.window.height, false);
         transition.tex.from = transition.fbo.from.getColorBufferTexture();
         transition.tex.to = transition.fbo.to.getColorBufferTexture();
+
+        setScreen(createStartScreen());
     }
 
     @Override

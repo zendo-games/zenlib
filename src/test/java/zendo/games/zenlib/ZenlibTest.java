@@ -12,9 +12,11 @@ import zendo.games.zenlib.screens.ZenScreen;
 public class ZenlibTest extends ZenMain {
 
     public static final ZenConfig config = new ZenConfig();
+    public static ZenlibTest game;
 
     public ZenlibTest() {
         super(config);
+        ZenlibTest.game = this;
     }
 
     @Override
@@ -49,7 +51,7 @@ public class ZenlibTest extends ZenMain {
     // Test Screen
     // ------------------------------------------------------------------------
 
-    public static class TestScreen extends ZenScreen<Assets> {
+    public class TestScreen extends ZenScreen<Assets> {
         public TestScreen() {
             super(Assets.class);
             Gdx.input.setInputProcessor(uiStage);
@@ -91,7 +93,7 @@ public class ZenlibTest extends ZenMain {
     // Test Screen
     // ------------------------------------------------------------------------
 
-    public static class TestScreen2 extends ZenScreen<Assets> {
+    public class TestScreen2 extends ZenScreen<Assets> {
         public TestScreen2() {
             super(Assets.class);
             var button = new VisTextButton("Screen 2");
@@ -116,12 +118,12 @@ public class ZenlibTest extends ZenMain {
             batch.begin();
             {
                 var image = assets.gdx;
-                var scale = 1 / 4f;
+                var scale = 1 / 2f;
                 var imageWidth = scale * image.getWidth();
                 var imageHeight = scale * image.getHeight();
                 batch.draw(image,
-                        (worldCamera.viewportWidth - imageWidth) / 3f,
-                        (worldCamera.viewportHeight - imageHeight) / 3f,
+                        (worldCamera.viewportWidth - imageWidth) / 2f,
+                        (worldCamera.viewportHeight - imageHeight) / 2f,
                         imageWidth, imageHeight);
             }
             batch.end();

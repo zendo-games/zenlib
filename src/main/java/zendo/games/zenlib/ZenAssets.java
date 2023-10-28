@@ -10,10 +10,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.kotcrab.vis.ui.VisUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 import zendo.games.zenlib.assets.ZenPatch;
@@ -64,7 +62,7 @@ public abstract class ZenAssets implements Disposable {
 
         // TODO - add support for sync/async loading
         mgr.finishLoading();
-        update();
+        initialize();
     }
 
     /**
@@ -79,7 +77,7 @@ public abstract class ZenAssets implements Disposable {
      */
     public abstract void initCachedAssets();
 
-    public float update() {
+    public float initialize() {
         if (!mgr.update()) return mgr.getProgress();
         if (initialized) return 1;
         loadVisUI();
@@ -95,23 +93,6 @@ public abstract class ZenAssets implements Disposable {
         batch.dispose();
         mgr.dispose();
         pixelTexture.dispose();
-    }
-
-    public static ShaderProgram loadShader(String vertSourcePath, String fragSourcePath) {
-        ShaderProgram.pedantic = false;
-
-        var shaderProgram = new ShaderProgram(
-                Gdx.files.internal(vertSourcePath),
-                Gdx.files.internal(fragSourcePath));
-        var log = shaderProgram.getLog();
-
-        if (!shaderProgram.isCompiled()) {
-            throw new GdxRuntimeException("LoadShader: compilation failed:\n" + log);
-        } else if (ZenMain.Debug.shaders) {
-            Gdx.app.debug("LoadShader", "compilation log:\n" + log);
-        }
-
-        return shaderProgram;
     }
 
     public void putPref(String key, String value) {

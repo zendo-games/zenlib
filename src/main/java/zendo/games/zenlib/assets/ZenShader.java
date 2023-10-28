@@ -50,7 +50,7 @@ public enum ZenShader {
         ShaderProgram.pedantic = false;
         ShaderProgram shaderProgram = new ShaderProgram(
                 Gdx.files.classpath("zendo/games/zenlib/assets/" + vertSourcePath),
-                Gdx.files.classpath("zendo/games/zenlib/assets/" + fragSourcePath);
+                Gdx.files.classpath("zendo/games/zenlib/assets/" + fragSourcePath));
         String log = shaderProgram.getLog();
 
         if (!shaderProgram.isCompiled()) {
