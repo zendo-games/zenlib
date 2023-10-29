@@ -28,6 +28,9 @@
          like the libGDX reflection code. These "inherits" names are period-separated. -->
     <inherits name="com.badlogic.gdx.backends.gdx_backends_gwt" />
 
+    <!-- Since we're using VisUI, let's inherit it's GWT module to bring in classpath entries and reflection config -->
+    <inherits name="com.kotcrab.vis.vis-ui" />
+
     <!-- setup library packages/classes that need to be in the reflection cache to be usable in project code -->
     <!-- NOTE: not sure if all these need to be here or just things we're using reflection utils with, like ZenAssets -->
     <extend-configuration-property name="gdx.reflect.include" value="zendo.games.zenlib.ZenAssets" />
