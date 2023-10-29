@@ -10,21 +10,19 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.kotcrab.vis.ui.VisUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 import zendo.games.zenlib.assets.ZenPatch;
+import zendo.games.zenlib.assets.ZenTransition;
 
 public abstract class ZenAssets implements Disposable {
 
-    /**
-     * Override this value in project's ZenAssets subclass!
-     */
+    public static final AssetDescriptor<TextureAtlas> ZEN_PATCH_DESCRIPTOR = new AssetDescriptor<>(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
+
     public static String PREFS_NAME = "zenlib_prefs";
-    public final AssetDescriptor<TextureAtlas> ZEN_PATCH_DESCRIPTOR = new AssetDescriptor(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
+
     public final SpriteBatch batch;
     public final ShapeDrawer shapes;
     public final AssetManager mgr;
@@ -63,7 +61,7 @@ public abstract class ZenAssets implements Disposable {
 
         // TODO - add support for sync/async loading
         mgr.finishLoading();
-        update();
+        initialize();
     }
 
     /**
@@ -78,11 +76,10 @@ public abstract class ZenAssets implements Disposable {
      */
     public abstract void initCachedAssets();
 
-    public float update() {
+    public float initialize() {
         if (!mgr.update()) return mgr.getProgress();
         if (initialized) return 1;
-        loadVisUI();
-        ZenPatch.init(mgr.get(ZEN_PATCH_DESCRIPTOR));
+        loadLibraryAssets();
         initCachedAssets();
         initialized = true;
         return 1;
@@ -95,23 +92,6 @@ public abstract class ZenAssets implements Disposable {
         pixelTexture.dispose();
     }
 
-    public static ShaderProgram loadShader(String vertSourcePath, String fragSourcePath) {
-        ShaderProgram.pedantic = false;
-
-        var shaderProgram = new ShaderProgram(
-                Gdx.files.internal(vertSourcePath),
-                Gdx.files.internal(fragSourcePath));
-        var log = shaderProgram.getLog();
-
-        if (!shaderProgram.isCompiled()) {
-            throw new GdxRuntimeException("LoadShader: compilation failed:\n" + log);
-        } else if (ZenMain.Debug.shaders) {
-            Gdx.app.debug("LoadShader", "compilation log:\n" + log);
-        }
-
-        return shaderProgram;
-    }
-
     public void putPref(String key, String value) {
         preferences.putString(key, value);
         preferences.flush();
@@ -121,12 +101,20 @@ public abstract class ZenAssets implements Disposable {
         return preferences.getString(key, "");
     }
 
+    private void loadLibraryAssets() {
+        loadVisUI();
+        ZenPatch.init(mgr.get(ZEN_PATCH_DESCRIPTOR));
+        ZenTransition.init();
+    }
+
     private void loadVisUI() {
-        if (ZenMain.instance.config.ui.skinPath == null) {
+        var path = ZenMain.instance.config.ui.skinPath;
+        if (path == null) {
             VisUI.load(VisUI.SkinScale.X2);
             Gdx.app.debug("LoadVisUI", "No uiSkinPath specified in ZenConfig, loading default VisUI skin (x2 scale)");
         } else {
-            VisUI.load(mgr.get(ZenMain.instance.config.ui.skinPath, Skin.class));
+            VisUI.load(mgr.get(path, Skin.class));
         }
     }
+
 }

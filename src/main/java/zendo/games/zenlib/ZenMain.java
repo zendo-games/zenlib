@@ -14,7 +14,9 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import zendo.games.zenlib.assets.ZenTransition;
 import zendo.games.zenlib.screens.ZenScreen;
+import zendo.games.zenlib.screens.transitions.Transition;
 import zendo.games.zenlib.utils.Time;
 import zendo.games.zenlib.utils.accessors.*;
 
@@ -31,14 +33,14 @@ public abstract class ZenMain extends ApplicationAdapter {
 
     public static ZenMain instance;
 
+    public ZenConfig config;
     public ZenAssets zenAssets;
     public TweenManager tween;
     public FrameBuffer frameBuffer;
     public TextureRegion frameBufferRegion;
     public OrthographicCamera windowCamera;
 
-    public ZenScreen screen;
-    public ZenConfig config;
+    private Transition transition;
 
     public ZenMain(ZenConfig config) {
         ZenMain.instance = this;
@@ -80,22 +82,28 @@ public abstract class ZenMain extends ApplicationAdapter {
         windowCamera.update();
 
         zenAssets = createAssets();
-        screen = createStartScreen();
 
-        // TODO - setScreen() to handle transitions
+        transition = new Transition(config);
+        setScreen(createStartScreen());
     }
 
     @Override
     public void dispose() {
         frameBuffer.dispose();
+        transition.dispose();
         zenAssets.dispose();
     }
 
     @Override
     public void resize(int width, int height) {
+        var screen = currentScreen();
         if (screen != null) {
             screen.resize(width, height);
         }
+    }
+
+    public ZenScreen currentScreen() {
+        return transition.screens.current;
     }
 
     public void update() {
@@ -115,7 +123,7 @@ public abstract class ZenMain extends ApplicationAdapter {
         {
             Time.update();
             tween.update(Time.delta);
-            screen.alwaysUpdate(Time.delta);
+            transition.alwaysUpdate(Time.delta);
         }
 
         // handle a pause
@@ -132,13 +140,40 @@ public abstract class ZenMain extends ApplicationAdapter {
         Time.previous_elapsed = Time.elapsed_millis();
 
         // update normally (if not paused)
-        screen.update(Time.delta);
+        transition.update(Time.delta);
     }
 
     @Override
     public void render() {
         update();
-        screen.render(zenAssets.batch);
+        var batch = zenAssets.batch;
+        var screens = transition.screens;
+
+        screens.current.renderFrameBuffers(batch);
+        if (screens.next != null) {
+            transition.render(batch, windowCamera);
+        } else {
+            screens.current.render(batch);
+        }
+    }
+
+    public void setScreen(ZenScreen currentScreen) {
+        setScreen(currentScreen, null, Transition.DEFAULT_SPEED);
+    }
+
+    public void setScreen(final ZenScreen newScreen, ZenTransition type, float transitionSpeed) {
+        // only one transition at a time
+        if (transition.active) return;
+        if (transition.screens.next != null) return;
+
+        var screens = transition.screens;
+        if (screens.current == null) {
+            // no current screen set, go ahead and set it
+            screens.current = newScreen;
+        } else {
+            // current screen is set, so trigger transition to new screen
+            transition.startTransition(newScreen, type, transitionSpeed);
+        }
     }
 
 }
