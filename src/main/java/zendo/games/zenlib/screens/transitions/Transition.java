@@ -11,7 +11,7 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.utils.Disposable;
 import zendo.games.zenlib.ZenConfig;
 import zendo.games.zenlib.ZenMain;
-import zendo.games.zenlib.assets.ZenTransitions;
+import zendo.games.zenlib.assets.ZenTransition;
 import zendo.games.zenlib.screens.ZenScreen;
 import zendo.games.zenlib.utils.Time;
 
@@ -102,11 +102,11 @@ public class Transition implements Disposable {
         batch.setShader(null);
     }
 
-    public void startTransition(ZenScreen newScreen, ZenTransitions type, float transitionSpeed) {
+    public void startTransition(ZenScreen newScreen, ZenTransition type, float transitionSpeed) {
         // current screen is active, so trigger transition to new screen
         active = true;
         percent.setValue(0);
-        shader = (type != null) ? type.shader : ZenTransitions.random();
+        shader = (type != null) ? type.shader : ZenTransition.random();
 
         Timeline.createSequence()
                 .pushPause(.1f)

@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import zendo.games.zenlib.ZenMain;
 
-public enum ZenTransitions {
+public enum ZenTransition {
       blinds
     , circle_crop
     , crosshatch
@@ -24,7 +24,7 @@ public enum ZenTransitions {
     public ShaderProgram shader;
     public static boolean initialized = false;
 
-    ZenTransitions() {
+    ZenTransition() {
         this.shader = null;
     }
 

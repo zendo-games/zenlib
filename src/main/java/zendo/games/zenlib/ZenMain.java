@@ -14,7 +14,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import zendo.games.zenlib.assets.ZenTransitions;
+import zendo.games.zenlib.assets.ZenTransition;
 import zendo.games.zenlib.screens.ZenScreen;
 import zendo.games.zenlib.screens.transitions.Transition;
 import zendo.games.zenlib.utils.Time;
@@ -161,7 +161,7 @@ public abstract class ZenMain extends ApplicationAdapter {
         setScreen(currentScreen, null, Transition.DEFAULT_SPEED);
     }
 
-    public void setScreen(final ZenScreen newScreen, ZenTransitions type, float transitionSpeed) {
+    public void setScreen(final ZenScreen newScreen, ZenTransition type, float transitionSpeed) {
         // only one transition at a time
         if (transition.active) return;
         if (transition.screens.next != null) return;

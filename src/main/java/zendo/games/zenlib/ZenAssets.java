@@ -15,7 +15,7 @@ import com.badlogic.gdx.utils.Disposable;
 import com.kotcrab.vis.ui.VisUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 import zendo.games.zenlib.assets.ZenPatch;
-import zendo.games.zenlib.assets.ZenTransitions;
+import zendo.games.zenlib.assets.ZenTransition;
 
 public abstract class ZenAssets implements Disposable {
 
@@ -104,7 +104,7 @@ public abstract class ZenAssets implements Disposable {
     private void loadLibraryAssets() {
         loadVisUI();
         ZenPatch.init(mgr.get(ZEN_PATCH_DESCRIPTOR));
-        ZenTransitions.init();
+        ZenTransition.init();
     }
 
     private void loadVisUI() {
