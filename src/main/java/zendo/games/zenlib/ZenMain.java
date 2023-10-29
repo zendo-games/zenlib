@@ -20,7 +20,7 @@ import zendo.games.zenlib.screens.transitions.Transition;
 import zendo.games.zenlib.utils.Time;
 import zendo.games.zenlib.utils.accessors.*;
 
-public abstract class ZenMain extends ApplicationAdapter {
+public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationAdapter {
 
     /**
      * Debug flags, toggle these values as needed, or override in project's ZenMain subclass
@@ -31,6 +31,7 @@ public abstract class ZenMain extends ApplicationAdapter {
         public static boolean ui = false;
     }
 
+    @SuppressWarnings("rawtypes")
     public static ZenMain instance;
 
     public ZenConfig config;
@@ -40,7 +41,7 @@ public abstract class ZenMain extends ApplicationAdapter {
     public TextureRegion frameBufferRegion;
     public OrthographicCamera windowCamera;
 
-    private Transition transition;
+    private Transition<AssetsType> transition;
 
     public ZenMain(ZenConfig config) {
         ZenMain.instance = this;
@@ -55,7 +56,7 @@ public abstract class ZenMain extends ApplicationAdapter {
     /**
      * Override to create project-specific ZenScreen subclass instance that will be used as the starting screen
      */
-    public abstract ZenScreen createStartScreen();
+    public abstract ZenScreen<AssetsType> createStartScreen();
 
     @Override
     public void create() {
@@ -83,7 +84,7 @@ public abstract class ZenMain extends ApplicationAdapter {
 
         zenAssets = createAssets();
 
-        transition = new Transition(config);
+        transition = new Transition<>(config);
         setScreen(createStartScreen());
     }
 
@@ -102,7 +103,7 @@ public abstract class ZenMain extends ApplicationAdapter {
         }
     }
 
-    public ZenScreen currentScreen() {
+    public ZenScreen<AssetsType> currentScreen() {
         return transition.screens.current;
     }
 
@@ -157,11 +158,11 @@ public abstract class ZenMain extends ApplicationAdapter {
         }
     }
 
-    public void setScreen(ZenScreen currentScreen) {
+    public void setScreen(ZenScreen<AssetsType> currentScreen) {
         setScreen(currentScreen, null, Transition.DEFAULT_SPEED);
     }
 
-    public void setScreen(final ZenScreen newScreen, ZenTransition type, float transitionSpeed) {
+    public void setScreen(final ZenScreen<AssetsType> newScreen, ZenTransition type, float transitionSpeed) {
         // only one transition at a time
         if (transition.active) return;
         if (transition.screens.next != null) return;

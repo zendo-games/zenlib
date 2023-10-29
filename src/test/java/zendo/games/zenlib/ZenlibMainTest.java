@@ -11,14 +11,15 @@ import com.kotcrab.vis.ui.widget.VisTextButton;
 import zendo.games.zenlib.assets.ZenPatch;
 import zendo.games.zenlib.screens.ZenScreen;
 
-public class ZenlibTest extends ZenMain {
+public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
 
     public static final ZenConfig config = new ZenConfig();
-    public static ZenlibTest game;
 
-    public ZenlibTest() {
+    public static ZenlibMainTest game;
+
+    public ZenlibMainTest() {
         super(config);
-        ZenlibTest.game = this;
+        ZenlibMainTest.game = this;
     }
 
     @Override
@@ -76,7 +77,7 @@ public class ZenlibTest extends ZenMain {
             button.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    ZenlibTest.game.setScreen(new TestScreen2());
+                    game.setScreen(new TestScreen2());
                 }
             });
             uiStage.addActor(button);
@@ -130,7 +131,7 @@ public class ZenlibTest extends ZenMain {
             button.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
-                    ZenlibTest.game.setScreen(new TestScreen1());
+                    game.setScreen(new TestScreen1());
                 }
             });
             uiStage.addActor(button);
