@@ -11,11 +11,11 @@ public class Lwjgl3Launcher {
     }
 
     private static Lwjgl3Application createApplication() {
-        return new Lwjgl3Application(new ZenlibTest(), getDefaultConfiguration());
+        return new Lwjgl3Application(new ZenlibMainTest(), getDefaultConfiguration());
     }
 
     private static Lwjgl3ApplicationConfiguration getDefaultConfiguration() {
-        var windowConfig  = ZenlibTest.config.window;
+        var windowConfig  = ZenlibMainTest.config.window;
 
         var configuration = new Lwjgl3ApplicationConfiguration();
         configuration.setTitle(windowConfig.title);
