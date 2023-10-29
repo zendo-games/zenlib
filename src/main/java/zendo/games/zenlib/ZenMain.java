@@ -35,13 +35,13 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
     public static ZenMain instance;
 
     public ZenConfig config;
-    public ZenAssets zenAssets;
+    public AssetsType assets;
     public TweenManager tween;
     public FrameBuffer frameBuffer;
     public TextureRegion frameBufferRegion;
     public OrthographicCamera windowCamera;
 
-    private Transition<AssetsType> transition;
+    private Transition transition;
 
     public ZenMain(ZenConfig config) {
         ZenMain.instance = this;
@@ -51,12 +51,12 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
     /**
      * Override to create project-specific ZenAssets subclass instance
      */
-    public abstract ZenAssets createAssets();
+    public abstract AssetsType createAssets();
 
     /**
      * Override to create project-specific ZenScreen subclass instance that will be used as the starting screen
      */
-    public abstract ZenScreen<AssetsType> createStartScreen();
+    public abstract ZenScreen createStartScreen();
 
     @Override
     public void create() {
@@ -82,9 +82,9 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
         windowCamera.setToOrtho(false, config.window.width, config.window.height);
         windowCamera.update();
 
-        zenAssets = createAssets();
+        assets = createAssets();
 
-        transition = new Transition<>(config);
+        transition = new Transition(config);
         setScreen(createStartScreen());
     }
 
@@ -92,7 +92,7 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
     public void dispose() {
         frameBuffer.dispose();
         transition.dispose();
-        zenAssets.dispose();
+        assets.dispose();
     }
 
     @Override
@@ -103,7 +103,7 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
         }
     }
 
-    public ZenScreen<AssetsType> currentScreen() {
+    public ZenScreen currentScreen() {
         return transition.screens.current;
     }
 
@@ -147,7 +147,7 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
     @Override
     public void render() {
         update();
-        var batch = zenAssets.batch;
+        var batch = assets.batch;
         var screens = transition.screens;
 
         screens.current.renderFrameBuffers(batch);
@@ -158,11 +158,11 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
         }
     }
 
-    public void setScreen(ZenScreen<AssetsType> currentScreen) {
+    public void setScreen(ZenScreen currentScreen) {
         setScreen(currentScreen, null, Transition.DEFAULT_SPEED);
     }
 
-    public void setScreen(final ZenScreen<AssetsType> newScreen, ZenTransition type, float transitionSpeed) {
+    public void setScreen(final ZenScreen newScreen, ZenTransition type, float transitionSpeed) {
         // only one transition at a time
         if (transition.active) return;
         if (transition.screens.next != null) return;

@@ -9,14 +9,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.utils.Disposable;
-import zendo.games.zenlib.ZenAssets;
 import zendo.games.zenlib.ZenConfig;
 import zendo.games.zenlib.ZenMain;
 import zendo.games.zenlib.assets.ZenTransition;
 import zendo.games.zenlib.screens.ZenScreen;
 import zendo.games.zenlib.utils.Time;
 
-public class Transition<AssetsType extends ZenAssets> implements Disposable {
+public class Transition implements Disposable {
 
     public static final float DEFAULT_SPEED = 0.66f;
 
@@ -103,7 +102,7 @@ public class Transition<AssetsType extends ZenAssets> implements Disposable {
         batch.setShader(null);
     }
 
-    public void startTransition(final ZenScreen<AssetsType> newScreen, ZenTransition type, float transitionSpeed) {
+    public void startTransition(final ZenScreen newScreen, ZenTransition type, float transitionSpeed) {
         // current screen is active, so trigger transition to new screen
         active = true;
         percent.setValue(0);
@@ -125,9 +124,9 @@ public class Transition<AssetsType extends ZenAssets> implements Disposable {
     // Data Classes
     // ------------------------------------------------------------------------
 
-    public class Screens implements Disposable{
-        public ZenScreen<AssetsType> next;
-        public ZenScreen<AssetsType> current;
+    public static class Screens implements Disposable{
+        public ZenScreen next;
+        public ZenScreen current;
 
         @Override
         public void dispose() {

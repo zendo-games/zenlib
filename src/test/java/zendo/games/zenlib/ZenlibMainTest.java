@@ -23,12 +23,12 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
     }
 
     @Override
-    public ZenAssets createAssets() {
+    public Assets createAssets() {
         return new Assets();
     }
 
     @Override
-    public ZenScreen<Assets> createStartScreen() {
+    public ZenScreen createStartScreen() {
         return new TestScreen1();
     }
 
@@ -54,10 +54,8 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
     // Test Screen
     // ------------------------------------------------------------------------
 
-    public static class TestScreen1 extends ZenScreen<Assets> {
+    public static class TestScreen1 extends ZenScreen {
         public TestScreen1() {
-            super(Assets.class);
-
             // override the default 'ScreenViewport'
             int screenWidth = config.window.width / 2;
             int screenHeight = config.window.height / 2;
@@ -90,7 +88,7 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
             batch.setProjectionMatrix(worldCamera.combined);
             batch.begin();
             {
-                var image = assets.gdx;
+                var image = game.assets.gdx;
                 var scale = 1 / 4f;
                 var imageWidth = scale * image.getWidth();
                 var imageHeight = scale * image.getHeight();
@@ -108,10 +106,8 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
     // Test Screen 2 (for transition testing)
     // ------------------------------------------------------------------------
 
-    public static class TestScreen2 extends ZenScreen<Assets> {
+    public static class TestScreen2 extends ZenScreen {
         public TestScreen2() {
-            super(Assets.class);
-
             // override the default 'ScreenViewport'
             int screenWidth = config.window.width / 4;
             int screenHeight = config.window.height / 4;
@@ -144,7 +140,7 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
             batch.setProjectionMatrix(worldCamera.combined);
             batch.begin();
             {
-                var image = assets.gdx;
+                var image = game.assets.gdx;
                 var scale = 2 / 4f;
                 var imageWidth = scale * image.getWidth();
                 var imageHeight = scale * image.getHeight();
