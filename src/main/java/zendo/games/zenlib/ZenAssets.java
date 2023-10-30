@@ -19,7 +19,8 @@ import zendo.games.zenlib.assets.ZenTransition;
 
 public abstract class ZenAssets implements Disposable {
 
-    public static final AssetDescriptor<TextureAtlas> ZEN_PATCH_DESCRIPTOR = new AssetDescriptor<>(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
+    public static final AssetDescriptor<TextureAtlas> ZEN_PATCH_DESCRIPTOR =
+            new AssetDescriptor<>(Gdx.files.classpath("zendo/games/zenlib/assets/zenpatch.atlas"), TextureAtlas.class);
 
     public static String PREFS_NAME = "zenlib_prefs";
 
@@ -116,5 +117,4 @@ public abstract class ZenAssets implements Disposable {
             VisUI.load(mgr.get(path, Skin.class));
         }
     }
-
 }

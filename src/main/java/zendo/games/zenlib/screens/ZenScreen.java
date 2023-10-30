@@ -71,5 +71,4 @@ public abstract class ZenScreen implements Disposable {
 
         // extend and setup any per-screen ui widgets in here...
     }
-
 }

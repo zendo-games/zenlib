@@ -18,9 +18,15 @@ public class Vector3Accessor implements TweenAccessor<Vector3> {
     @Override
     public int getValues(Vector3 target, int tweenType, float[] returnValues) {
         switch (tweenType) {
-            case X:  returnValues[0] = target.x; return 1;
-            case Y:  returnValues[0] = target.y; return 1;
-            case Z:  returnValues[0] = target.z; return 1;
+            case X:
+                returnValues[0] = target.x;
+                return 1;
+            case Y:
+                returnValues[0] = target.y;
+                return 1;
+            case Z:
+                returnValues[0] = target.z;
+                return 1;
             case XY:
                 returnValues[0] = target.x;
                 returnValues[1] = target.y;
@@ -34,16 +40,24 @@ public class Vector3Accessor implements TweenAccessor<Vector3> {
                 returnValues[1] = target.y;
                 returnValues[2] = target.z;
                 return 3;
-            default: assert false; return -1;
+            default:
+                assert false;
+                return -1;
         }
     }
 
     @Override
     public void setValues(Vector3 target, int tweenType, float[] newValues) {
         switch (tweenType) {
-            case X:  target.x = newValues[0]; break;
-            case Y:  target.y = newValues[0]; break;
-            case Z:  target.z = newValues[0]; break;
+            case X:
+                target.x = newValues[0];
+                break;
+            case Y:
+                target.y = newValues[0];
+                break;
+            case Z:
+                target.z = newValues[0];
+                break;
             case XY:
                 target.x = newValues[0];
                 target.y = newValues[1];
@@ -57,7 +71,8 @@ public class Vector3Accessor implements TweenAccessor<Vector3> {
                 target.y = newValues[1];
                 target.z = newValues[2];
                 break;
-            default: assert false;
+            default:
+                assert false;
         }
     }
 }

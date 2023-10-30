@@ -18,10 +18,18 @@ public class ColorAccessor implements TweenAccessor<Color> {
     @Override
     public int getValues(Color target, int tweenType, float[] returnValues) {
         switch (tweenType) {
-            case R:  returnValues[0] = target.r; return 1;
-            case G:  returnValues[0] = target.g; return 1;
-            case B:  returnValues[0] = target.b; return 1;
-            case A:  returnValues[0] = target.a; return 1;
+            case R:
+                returnValues[0] = target.r;
+                return 1;
+            case G:
+                returnValues[0] = target.g;
+                return 1;
+            case B:
+                returnValues[0] = target.b;
+                return 1;
+            case A:
+                returnValues[0] = target.a;
+                return 1;
             case RGB:
                 returnValues[0] = target.r;
                 returnValues[1] = target.g;
@@ -33,17 +41,27 @@ public class ColorAccessor implements TweenAccessor<Color> {
                 returnValues[2] = target.b;
                 returnValues[3] = target.a;
                 return 4;
-            default: assert false; return -1;
+            default:
+                assert false;
+                return -1;
         }
     }
 
     @Override
     public void setValues(Color target, int tweenType, float[] newValues) {
         switch (tweenType) {
-            case R:  target.r = newValues[0]; break;
-            case G:  target.g = newValues[0]; break;
-            case B:  target.b = newValues[0]; break;
-            case A:  target.a = newValues[0]; break;
+            case R:
+                target.r = newValues[0];
+                break;
+            case G:
+                target.g = newValues[0];
+                break;
+            case B:
+                target.b = newValues[0];
+                break;
+            case A:
+                target.a = newValues[0];
+                break;
             case RGB:
                 target.r = newValues[0];
                 target.g = newValues[1];
@@ -55,8 +73,8 @@ public class ColorAccessor implements TweenAccessor<Color> {
                 target.b = newValues[2];
                 target.a = newValues[3];
                 break;
-            default: assert false;
+            default:
+                assert false;
         }
     }
-
 }

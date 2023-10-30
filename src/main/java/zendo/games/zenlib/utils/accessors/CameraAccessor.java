@@ -10,7 +10,6 @@ public class CameraAccessor implements TweenAccessor<OrthographicCamera> {
 
     public static final int XYZ = 1;
 
-
     @Override
     public int getValues(OrthographicCamera target, int tweenType, float[] returnValues) {
         switch (tweenType) {
@@ -20,7 +19,9 @@ public class CameraAccessor implements TweenAccessor<OrthographicCamera> {
                 returnValues[2] = target.zoom;
                 return 3;
 
-            default: assert false; return -1;
+            default:
+                assert false;
+                return -1;
         }
     }
 
@@ -32,8 +33,8 @@ public class CameraAccessor implements TweenAccessor<OrthographicCamera> {
                 target.position.y = newValues[1];
                 target.zoom = newValues[2];
                 break;
-            default: assert false;
+            default:
+                assert false;
         }
     }
-
 }

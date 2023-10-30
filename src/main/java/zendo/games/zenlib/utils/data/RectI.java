@@ -36,5 +36,4 @@ public class RectI {
     public int bottom() {
         return y;
     }
-
 }

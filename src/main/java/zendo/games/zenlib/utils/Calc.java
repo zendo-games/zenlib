@@ -6,13 +6,13 @@ import com.badlogic.gdx.math.Vector2;
 public class Calc {
 
     public static float modf(float x, float m) {
-        return x - (int)(x / m) * m;
+        return x - (int) (x / m) * m;
     }
 
     public static int clampInt(int t, int min, int max) {
-        if      (t < min) return min;
+        if (t < min) return min;
         else if (t > max) return max;
-        else              return t;
+        else return t;
     }
 
     public static float floor(float value) {
@@ -44,15 +44,11 @@ public class Calc {
     }
 
     public static int sign(int val) {
-        return (val < 0) ? -1
-             : (val > 0) ? 1
-             : 0;
+        return (val < 0) ? -1 : (val > 0) ? 1 : 0;
     }
 
     public static float sign(float val) {
-        return (val < 0) ? -1
-             : (val > 0) ? 1
-             : 0;
+        return (val < 0) ? -1 : (val > 0) ? 1 : 0;
     }
 
     public static int abs(int val) {
@@ -84,9 +80,7 @@ public class Calc {
             min = max;
             max = temp;
         }
-        return    value < min ? min
-                : value > max ? max
-                : value;
+        return value < min ? min : value > max ? max : value;
     }
 
     public static boolean between(float value, float min, float max) {
@@ -108,12 +102,11 @@ public class Calc {
 
     public static Vector2 angleToVector(Vector2 outVector, float angle) {
         outVector.x = -(float) Math.sin(angle);
-        outVector.y =  (float) Math.cos(angle);
+        outVector.y = (float) Math.cos(angle);
         return outVector;
     }
 
     public static int randomBetween(int min, int max) {
         return min + (int) (Math.random() * (max - min + 1));
     }
-
 }
