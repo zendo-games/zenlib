@@ -7,11 +7,13 @@ buildscript {
     }
     dependencies {
         classpath 'com.vanniktech:gradle-maven-publish-plugin:0.22.0'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.22.0'
     }
 }
 
 apply plugin: 'java-library'
 apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'com.diffplug.spotless'
 
 def projectName = 'zenlib'
 
@@ -35,6 +37,15 @@ if (JavaVersion.current().isJava8Compatible()) {
     }
 }
 
+spotless {
+    java {
+        importOrder()
+        removeUnusedImports()
+        palantirJavaFormat()
+        formatAnnotations()
+    }
+}
+
 compileJava {
 	// Targeting Java 7 is the lowest version you could need to go at this point.
 	// libGDX itself targets a mix of Java 7 (for most backends) and 8 (for LWJGL3).
@@ -47,6 +58,9 @@ compileJava {
     if (JavaVersion.current().isJava9Compatible()) {
         options.release.set(11)
     }
+
+    // TODO - uncomment when we're ready to enforce code formatting
+//    dependsOn(spotlessApply)
 }
 
 compileTestJava {
