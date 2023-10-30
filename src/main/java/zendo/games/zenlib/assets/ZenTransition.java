@@ -6,6 +6,7 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import zendo.games.zenlib.ZenMain;
 
 public enum ZenTransition {
+    // spotless:off
       blinds
     , circle_crop
     , crosshatch
@@ -20,6 +21,7 @@ public enum ZenTransition {
     , simple_zoom
     , stereo
     ;
+    // spotless:on
 
     public ShaderProgram shader;
     public static boolean initialized = false;

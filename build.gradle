@@ -39,6 +39,7 @@ if (JavaVersion.current().isJava8Compatible()) {
 
 spotless {
     java {
+        toggleOffOn()
         importOrder()
         removeUnusedImports()
         palantirJavaFormat()
