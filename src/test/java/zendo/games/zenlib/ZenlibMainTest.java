@@ -92,10 +92,12 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
                 var scale = 1 / 4f;
                 var imageWidth = scale * image.getWidth();
                 var imageHeight = scale * image.getHeight();
-                batch.draw(image,
+                batch.draw(
+                        image,
                         (worldCamera.viewportWidth - imageWidth) / 2f,
                         (worldCamera.viewportHeight - imageHeight) / 2f,
-                        imageWidth, imageHeight);
+                        imageWidth,
+                        imageHeight);
             }
             batch.end();
             uiStage.draw();
@@ -144,15 +146,15 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
                 var scale = 2 / 4f;
                 var imageWidth = scale * image.getWidth();
                 var imageHeight = scale * image.getHeight();
-                batch.draw(image,
+                batch.draw(
+                        image,
                         (worldCamera.viewportWidth - imageWidth) / 2f,
                         (worldCamera.viewportHeight - imageHeight) / 2f,
-                        imageWidth, imageHeight);
+                        imageWidth,
+                        imageHeight);
             }
             batch.end();
             uiStage.draw();
         }
     }
-
 }
-

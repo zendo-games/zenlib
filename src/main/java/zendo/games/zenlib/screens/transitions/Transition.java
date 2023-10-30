@@ -96,7 +96,7 @@ public class Transition implements Disposable {
             shader.setUniformf("u_percent", percent.floatValue());
 
             batch.setColor(Color.WHITE);
-            batch.draw(tex.to, 0,0, config.window.width, config.window.height);
+            batch.draw(tex.to, 0, 0, config.window.width, config.window.height);
         }
         batch.end();
         batch.setShader(null);
@@ -124,7 +124,7 @@ public class Transition implements Disposable {
     // Data Classes
     // ------------------------------------------------------------------------
 
-    public static class Screens implements Disposable{
+    public static class Screens implements Disposable {
         public ZenScreen next;
         public ZenScreen current;
 
@@ -150,5 +150,4 @@ public class Transition implements Disposable {
         public Texture from;
         public Texture to;
     }
-
 }

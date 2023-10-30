@@ -176,5 +176,4 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
             transition.startTransition(newScreen, type, transitionSpeed);
         }
     }
-
 }

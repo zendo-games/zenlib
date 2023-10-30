@@ -7,11 +7,13 @@ buildscript {
     }
     dependencies {
         classpath 'com.vanniktech:gradle-maven-publish-plugin:0.22.0'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.22.0'
     }
 }
 
 apply plugin: 'java-library'
 apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'com.diffplug.spotless'
 
 def projectName = 'zenlib'
 
@@ -35,6 +37,16 @@ if (JavaVersion.current().isJava8Compatible()) {
     }
 }
 
+spotless {
+    java {
+        toggleOffOn()
+        importOrder()
+        removeUnusedImports()
+        palantirJavaFormat()
+        formatAnnotations()
+    }
+}
+
 compileJava {
 	// Targeting Java 7 is the lowest version you could need to go at this point.
 	// libGDX itself targets a mix of Java 7 (for most backends) and 8 (for LWJGL3).
@@ -42,11 +54,13 @@ compileJava {
     // come to mind are simple-graphs and jdkgdxds). Note that Java 20 (and almost
     // certainly higher versions) cannot build with a release set to 7; set it to 8
     // or higher if you expect anyone to build with Java 20 or 21.
-    sourceCompatibility =11
+    sourceCompatibility = 11
     targetCompatibility = 11
     if (JavaVersion.current().isJava9Compatible()) {
         options.release.set(11)
     }
+
+    dependsOn(spotlessApply)
 }
 
 compileTestJava {

@@ -6,6 +6,7 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import zendo.games.zenlib.ZenMain;
 
 public enum ZenTransition {
+    // spotless:off
       blinds
     , circle_crop
     , crosshatch
@@ -20,6 +21,7 @@ public enum ZenTransition {
     , simple_zoom
     , stereo
     ;
+    // spotless:on
 
     public ShaderProgram shader;
     public static boolean initialized = false;
@@ -39,7 +41,8 @@ public enum ZenTransition {
 
     public static ShaderProgram random() {
         if (!initialized) {
-            throw new GdxRuntimeException("Failed to get random screen transition shader, ScreenTransitions is not initialized");
+            throw new GdxRuntimeException(
+                    "Failed to get random screen transition shader, ScreenTransitions is not initialized");
         }
 
         var random = (int) (Math.random() * values().length);
@@ -54,8 +57,8 @@ public enum ZenTransition {
         var log = shaderProgram.getLog();
 
         if (!shaderProgram.isCompiled()) {
-            throw new GdxRuntimeException("LoadShader: compilation failed for "
-                    + "'" + vertSourcePath + "' and '" + fragSourcePath + "':\n" + log);
+            throw new GdxRuntimeException("LoadShader: compilation failed for " + "'" + vertSourcePath + "' and '"
+                    + fragSourcePath + "':\n" + log);
         } else if (ZenMain.Debug.shaders) {
             Gdx.app.debug("LoadShader", "ShaderProgram compilation log: " + log);
         }

@@ -41,5 +41,4 @@ public class ZenConfig {
             this.skinPath = skinPath;
         }
     }
-
 }

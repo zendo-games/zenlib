@@ -58,7 +58,9 @@ public class PerspectiveCameraAccessor implements TweenAccessor<PerspectiveCamer
                 returnValues[8] = target.up.z;
                 return 9;
 
-            default: assert false; return -1;
+            default:
+                assert false;
+                return -1;
         }
     }
 
@@ -107,8 +109,8 @@ public class PerspectiveCameraAccessor implements TweenAccessor<PerspectiveCamer
                 target.up.y = newValues[7];
                 target.up.z = newValues[8];
                 break;
-            default: assert false;
+            default:
+                assert false;
         }
     }
-
 }

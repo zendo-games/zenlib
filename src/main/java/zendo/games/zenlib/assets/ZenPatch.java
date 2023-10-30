@@ -6,7 +6,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import zendo.games.zenlib.utils.data.RectI;
 
 public enum ZenPatch {
-    debug                           (4, 4, 4, 4)
+    // spotless:off
+      debug                           (4, 4, 4, 4)
     , glass                           (12, 12, 12, 12)
     , glass_active                    (12, 12, 12, 12)
     , glass_blue                      (12, 12, 12, 12)
@@ -48,6 +49,7 @@ public enum ZenPatch {
     , plain_gradient_highlight_yellow (2,  2,  2,  2)
     , shear                           (75, 75, 12, 12)
     ;
+    // spotless:on
 
     public final RectI bounds;
     public NinePatch ninepatch;

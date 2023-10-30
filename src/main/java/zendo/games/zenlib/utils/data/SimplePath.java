@@ -10,7 +10,10 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 
 public class SimplePath {
 
-    public enum Type { catmull, bspline }
+    public enum Type {
+        catmull,
+        bspline
+    }
 
     private static final int NUM_DEBUG_POINTS = 100;
     private static final boolean CONTINUOUS_BY_DEFAULT = false;
@@ -54,12 +57,13 @@ public class SimplePath {
 
     public SimplePath(boolean isContinuous, Type type, float... controlPoints) {
         if (controlPoints.length % 2 != 0) {
-            throw new GdxRuntimeException("Path control points array must have an even number of elements (x0, y0, x1, y1, ..., xN, yN)");
+            throw new GdxRuntimeException(
+                    "Path control points array must have an even number of elements (x0, y0, x1, y1, ..., xN, yN)");
         }
 
         this.controlPoints = new Vector2[controlPoints.length / 2];
         for (int i = 0; i < controlPoints.length; i += 2) {
-            this.controlPoints[i/2] = new Vector2(controlPoints[i], controlPoints[i+1]);
+            this.controlPoints[i / 2] = new Vector2(controlPoints[i], controlPoints[i + 1]);
         }
         this.output = new Vector2();
 
@@ -86,7 +90,7 @@ public class SimplePath {
     }
 
     public Vector2 derivativeAt(Vector2 out, float t) {
-        return path.derivativeAt(out,t);
+        return path.derivativeAt(out, t);
     }
 
     public float locate(Vector2 v) {
@@ -121,7 +125,7 @@ public class SimplePath {
         {
             shapeRenderer.setColor(Color.GREEN);
             for (int i = 0; i < debugPoints.length - 1; ++i) {
-                shapeRenderer.line(debugPoints[i+0], debugPoints[i+1]);
+                shapeRenderer.line(debugPoints[i + 0], debugPoints[i + 1]);
             }
         }
         shapeRenderer.end();
@@ -137,5 +141,4 @@ public class SimplePath {
 
         shapeRenderer.setColor(Color.WHITE);
     }
-
 }

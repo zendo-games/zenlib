@@ -1,12 +1,10 @@
 package zendo.games.zenlib.utils.camera;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.*;
-import text.formic.Stringf;
 import zendo.games.zenlib.utils.Calc;
 
 public class PanZoomCameraController extends GestureDetector.GestureAdapter implements InputProcessor {
@@ -147,8 +145,7 @@ public class PanZoomCameraController extends GestureDetector.GestureAdapter impl
     }
 
     @Override
-    public void pinchStop() {
-    }
+    public void pinchStop() {}
 
     // --------------------------------------------------------------
     // InputProcessor implementation
@@ -169,10 +166,9 @@ public class PanZoomCameraController extends GestureDetector.GestureAdapter impl
         return false;
     }
 
-
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        dragZoom =  (button == Input.Buttons.LEFT && pointer == 0);
+        dragZoom = (button == Input.Buttons.LEFT && pointer == 0);
         if (dragZoom) {
             initialPos.set(screenX, screenY, 0);
             camera.unproject(initialPos);
@@ -195,16 +191,19 @@ public class PanZoomCameraController extends GestureDetector.GestureAdapter impl
     }
 
     Vector3 draggedPosition = new Vector3();
+
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-        if (!dragZoom) { return false; }
+        if (!dragZoom) {
+            return false;
+        }
 
-//        var dx = Gdx.input.getDeltaX() * Time.delta * units_dragged_per_pixel;
-//        var dy = Gdx.input.getDeltaY() * Time.delta * units_dragged_per_pixel;
-//        if (dx < 0) moveLeft(dx);
-//        if (dx > 0) moveRight(dx);
-//        if (dy < 0) moveUp(dy);
-//        if (dy > 0) moveDown(dy);
+        //        var dx = Gdx.input.getDeltaX() * Time.delta * units_dragged_per_pixel;
+        //        var dy = Gdx.input.getDeltaY() * Time.delta * units_dragged_per_pixel;
+        //        if (dx < 0) moveLeft(dx);
+        //        if (dx > 0) moveRight(dx);
+        //        if (dy < 0) moveUp(dy);
+        //        if (dy > 0) moveDown(dy);
 
         draggedPosition.set(screenX, screenY, 0);
         camera.unproject(draggedPosition);
@@ -228,15 +227,16 @@ public class PanZoomCameraController extends GestureDetector.GestureAdapter impl
             var sign = Calc.sign(amountY);
             // NOTE - using Calc.eerp() in update() for exponential scaling
             //   so don't need to do this fiddly stuff
-//            var zoom = camera.zoom + sign * Time.delta * zoom_scale;
+            //            var zoom = camera.zoom + sign * Time.delta * zoom_scale;
 
             var scale = 0.5f;
             var zoom = camera.zoom + sign * scale;
             targetZoom = MathUtils.clamp(zoom, MIN_ZOOM, MAX_ZOOM);
 
-//            if (Config.Debug.general) {
-//                Gdx.app.log("ZOOM", Stringf.format("current: %.2f  target: %.2f", camera.zoom, targetZoom));
-//            }
+            //            if (Config.Debug.general) {
+            //                Gdx.app.log("ZOOM", Stringf.format("current: %.2f  target: %.2f", camera.zoom,
+            // targetZoom));
+            //            }
             return true;
         }
         return false;
