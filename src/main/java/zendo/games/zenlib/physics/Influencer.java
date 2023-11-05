@@ -9,10 +9,16 @@ public interface Influencer {
      * @return the strength
      */
     float getStrength();
+
     Vector2 getPosition();
+
     float getRange();
+
     void debugRender(SpriteBatch batch);
+
     boolean shouldEffect(Collidable c);
+
     void updateInfluence(float dt);
+
     void renderInfluence(SpriteBatch batch);
 }

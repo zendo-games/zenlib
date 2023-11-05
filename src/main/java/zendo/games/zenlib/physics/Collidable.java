@@ -15,21 +15,26 @@ public interface Collidable {
      * @return the friction percentage
      */
     float getFriction();
+
     float getMass();
 
     Vector2 getVelocity();
+
     void setVelocity(Vector2 newVel);
+
     void setVelocity(float x, float y);
 
     Vector2 getPosition();
+
     void setPosition(float x, float y);
+
     void setPosition(Vector2 newPos);
 
     Rectangle getCollisionBounds();
-//    void setCollisionBounds(float dt);
+    //    void setCollisionBounds(float dt);
     CollisionShape getCollisionShape();
 
     void collidedWith(Collidable object);
-    boolean shouldCollideWith(Collidable object);
 
+    boolean shouldCollideWith(Collidable object);
 }

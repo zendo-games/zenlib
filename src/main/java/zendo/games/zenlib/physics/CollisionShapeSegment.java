@@ -19,22 +19,31 @@ public class CollisionShapeSegment extends CollisionShape {
         start = new Vector2(x1, y1);
         end = new Vector2(x2, y2);
         delta = new Vector2(end).sub(start);
-        float dx = x2-x1;
-        float dy = y2-y1;
+        float dx = x2 - x1;
+        float dy = y2 - y1;
         normal = new Vector2(dy, -dx).nor();
     }
 
-    public float getRotation(){
+    public float getRotation() {
         return delta.angleDeg();
     }
 
     public void debugRender(SpriteBatch batch, TextureRegion pixelRegion) {
         float width = 2f;
         batch.setColor(Color.MAGENTA);
-        batch.draw(pixelRegion, start.x, start.y - width/2f, 0, width/2f, delta.len(), width, 1, 1, getRotation());
+        batch.draw(pixelRegion, start.x, start.y - width / 2f, 0, width / 2f, delta.len(), width, 1, 1, getRotation());
         batch.setColor(Color.YELLOW);
-        batch.draw(pixelRegion, (start.x + end.x)/2f, (start.y + end.y)/2f, 0, width/2f, 10, width, 1, 1, normal.angleDeg());
+        batch.draw(
+                pixelRegion,
+                (start.x + end.x) / 2f,
+                (start.y + end.y) / 2f,
+                0,
+                width / 2f,
+                10,
+                width,
+                1,
+                1,
+                normal.angleDeg());
         batch.setColor(Color.WHITE);
     }
-
 }

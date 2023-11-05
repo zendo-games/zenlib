@@ -10,7 +10,6 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
     public Collidable col1;
     public Collidable col2;
 
-
     public Collision() {
         this.t = 0;
         this.position = new Vector2();
@@ -52,7 +51,12 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
             Vector2 oldCenter = bouncer.getPosition();
             bouncer.setPosition(oldCenter.x + .001f * -normal.x, oldCenter.y + .001f * -normal.y);
         } else {
-            float p = 2 * (col1.getVelocity().x * normal.x + col1.getVelocity().y * normal.y - col2.getVelocity().x * normal.x - col2.getVelocity().y * normal.y)/(col1.getMass() + col2.getMass());
+            float p = 2
+                    * (col1.getVelocity().x * normal.x
+                            + col1.getVelocity().y * normal.y
+                            - col2.getVelocity().x * normal.x
+                            - col2.getVelocity().y * normal.y)
+                    / (col1.getMass() + col2.getMass());
             Vector2 firstVel = col1.getVelocity();
             Vector2 secondVel = col2.getVelocity();
             col1.setVelocity(firstVel.x - p * col2.getMass() * normal.x, firstVel.y - p * col2.getMass() * normal.y);
@@ -64,5 +68,4 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
     public int compareTo(Collision o) {
         return Double.compare(this.t, o.t);
     }
-
 }

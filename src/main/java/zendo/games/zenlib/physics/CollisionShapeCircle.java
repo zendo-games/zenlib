@@ -26,7 +26,7 @@ public class CollisionShapeCircle extends CollisionShape {
 
     public void debugRender(SpriteBatch batch, TextureRegion circleRegion) {
         batch.setColor(1f, 1f, 0, 1f);
-        batch.draw(circleRegion, center.x - radius, center.y - radius, radius*2f, radius*2f);
+        batch.draw(circleRegion, center.x - radius, center.y - radius, radius * 2f, radius * 2f);
         batch.setColor(Color.WHITE);
     }
 }

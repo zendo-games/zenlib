@@ -16,7 +16,7 @@ public class PhysicsSystem {
     private static long lastPhysicsStepTime = 0;
 
     private float internalTimer;
-    private final static float stepIncrement = .01f;
+    private static final float stepIncrement = .01f;
 
     private final Vector2 tempVec2 = new Vector2();
     private final Vector2 tempStart1 = new Vector2();
@@ -100,31 +100,41 @@ public class PhysicsSystem {
                         neighbors.addAll(collidables);
                     }
                     // Check against each other object
-                    for (Collidable neighbor : neighbors){
+                    for (Collidable neighbor : neighbors) {
                         if (neighbor == object) continue;
                         if (doShapesOverlap(object.getCollisionShape(), neighbor.getCollisionShape())) {
                             if (!(object.shouldCollideWith(neighbor) && neighbor.shouldCollideWith(object))) continue;
                             overlaps = true;
                             if (DEBUG && !hasFlaggedOverlaps) {
                                 hasFlaggedOverlaps = true;
-//                                Gdx.app.log("Physics", "overlap detected between "+ object.getClass().toString() +" and " +  neighbor.getClass().toString() +" moving away");
-//                                if ((lastCollision1 == object || lastCollision2 == object) && (lastCollision1 == neighbor || lastCollision2 == neighbor)){
-//                                    Gdx.app.log("Physics", "Same objects from last collision");
-//                                }
+                                //                                Gdx.app.log("Physics", "overlap detected between "+
+                                // object.getClass().toString() +" and " +  neighbor.getClass().toString() +" moving
+                                // away");
+                                //                                if ((lastCollision1 == object || lastCollision2 ==
+                                // object) && (lastCollision1 == neighbor || lastCollision2 == neighbor)){
+                                //                                    Gdx.app.log("Physics", "Same objects from last
+                                // collision");
+                                //                                }
                             }
                             // handle circle-circle first
-                            if (firstShape instanceof CollisionShapeCircle && neighbor.getCollisionShape() instanceof CollisionShapeCircle) {
+                            if (firstShape instanceof CollisionShapeCircle
+                                    && neighbor.getCollisionShape() instanceof CollisionShapeCircle) {
                                 CollisionShapeCircle firstCircle = (CollisionShapeCircle) firstShape;
                                 CollisionShapeCircle secondCircle = (CollisionShapeCircle) neighbor.getCollisionShape();
                                 if (firstCircle.center.epsilonEquals(secondCircle.center)) {
                                     Vector2 oldCenter = object.getPosition();
-                                    object.setPosition(tempVec2.set(oldCenter.x + MathUtils.random(-.1f, .1f), oldCenter.y + MathUtils.random(-.1f, .1f)));
+                                    object.setPosition(tempVec2.set(
+                                            oldCenter.x + MathUtils.random(-.1f, .1f),
+                                            oldCenter.y + MathUtils.random(-.1f, .1f)));
                                 }
                                 float distance = firstCircle.center.dst(secondCircle.center) - .001f;
                                 float overlapDistance = .5f * (distance - firstCircle.radius - secondCircle.radius);
-                                tempVec2.set(firstCircle.center).sub(secondCircle.center).nor();
+                                tempVec2.set(firstCircle.center)
+                                        .sub(secondCircle.center)
+                                        .nor();
 
-                                if (object.getMass() == Collidable.IMMOVABLE || neighbor.getMass() == Collidable.IMMOVABLE){
+                                if (object.getMass() == Collidable.IMMOVABLE
+                                        || neighbor.getMass() == Collidable.IMMOVABLE) {
                                     Collidable mover = object;
                                     if (object.getMass() == Collidable.IMMOVABLE) {
                                         mover = neighbor;
@@ -132,16 +142,24 @@ public class PhysicsSystem {
                                     }
                                     overlapDistance *= 2f;
                                     Vector2 oldCenter = mover.getPosition();
-                                    mover.setPosition(oldCenter.x  - (overlapDistance * tempVec2.x), oldCenter.y - (overlapDistance * tempVec2.y));
+                                    mover.setPosition(
+                                            oldCenter.x - (overlapDistance * tempVec2.x),
+                                            oldCenter.y - (overlapDistance * tempVec2.y));
                                 } else {
                                     Vector2 oldCenter = object.getPosition();
-                                    object.setPosition(oldCenter.x - (overlapDistance * tempVec2.x), oldCenter.y - (overlapDistance * tempVec2.y));
+                                    object.setPosition(
+                                            oldCenter.x - (overlapDistance * tempVec2.x),
+                                            oldCenter.y - (overlapDistance * tempVec2.y));
 
                                     oldCenter = neighbor.getPosition();
-                                    neighbor.setPosition(oldCenter.x + (overlapDistance * tempVec2.x), oldCenter.y + (overlapDistance * tempVec2.y));
+                                    neighbor.setPosition(
+                                            oldCenter.x + (overlapDistance * tempVec2.x),
+                                            oldCenter.y + (overlapDistance * tempVec2.y));
                                 }
-                            } else if ((object.getCollisionShape() instanceof CollisionShapeCircle && neighbor.getCollisionShape() instanceof CollisionShapeSegment) ||
-                                      (object.getCollisionShape() instanceof CollisionShapeSegment && neighbor.getCollisionShape() instanceof CollisionShapeCircle)) {
+                            } else if ((object.getCollisionShape() instanceof CollisionShapeCircle
+                                            && neighbor.getCollisionShape() instanceof CollisionShapeSegment)
+                                    || (object.getCollisionShape() instanceof CollisionShapeSegment
+                                            && neighbor.getCollisionShape() instanceof CollisionShapeCircle)) {
                                 // Circle Segment overlaps
                                 Collidable circle;
                                 Collidable segment;
@@ -154,18 +172,22 @@ public class PhysicsSystem {
                                     segment = object;
                                 }
                                 CollisionShapeCircle circleShape = (CollisionShapeCircle) circle.getCollisionShape();
-                                CollisionShapeSegment segmentShape = (CollisionShapeSegment) segment.getCollisionShape();
+                                CollisionShapeSegment segmentShape =
+                                        (CollisionShapeSegment) segment.getCollisionShape();
 
-                                tempVec2.set(Intersector.nearestSegmentPoint(segmentShape.start, segmentShape.end, circleShape.center, tempVec2));
+                                tempVec2.set(Intersector.nearestSegmentPoint(
+                                        segmentShape.start, segmentShape.end, circleShape.center, tempVec2));
                                 normal.set(tempVec2).sub(circleShape.center);
                                 float dist = circleShape.radius - normal.len();
-                                if (dist >= 0){
+                                if (dist >= 0) {
                                     // TODO: Take in to account the normal of the segment and only push the correct way
-                                    normal.set(circleShape.center).sub(tempVec2).nor().scl(dist+.01f);
+                                    normal.set(circleShape.center)
+                                            .sub(tempVec2)
+                                            .nor()
+                                            .scl(dist + .01f);
                                     Vector2 oldCenter = circle.getPosition();
                                     circle.setPosition(oldCenter.x + normal.x, oldCenter.y + normal.y);
                                 }
-
                             }
                         }
                     }
@@ -191,12 +213,12 @@ public class PhysicsSystem {
             // Check for collisions
             for (int i = 0; i < collidables.size; i++) {
                 Collidable c = collidables.get(i);
-                if (USE_QUADTREE){
+                if (USE_QUADTREE) {
                     neighbors.clear();
                     quadTree.retrieve(neighbors, c);
                 } else {
                     neighbors.clear();
-                    neighbors.addAll(collidables, i, collidables.size-i);
+                    neighbors.addAll(collidables, i, collidables.size - i);
                 }
                 for (int j = 0; j < neighbors.size; j++) {
                     Collidable other = neighbors.get(j);
@@ -206,7 +228,7 @@ public class PhysicsSystem {
                         if (c.shouldCollideWith(other) && other.shouldCollideWith(c)) {
                             Collision collision = collisionPool.obtain();
                             collision.init(result.time, result.position, result.normal, c, other);
-                            if (nextCollision == null || collision.t < nextCollision.t){
+                            if (nextCollision == null || collision.t < nextCollision.t) {
                                 if (nextCollision != null) {
                                     collisionPool.free(nextCollision);
                                 }
@@ -217,7 +239,7 @@ public class PhysicsSystem {
                 }
             }
             if (nextCollision != null) {
-//                collisions.sort();
+                //                collisions.sort();
                 Collision c = nextCollision;
                 double time = c.t * timeLeft;
                 updateMovements(collidables, influencers, time);
@@ -230,7 +252,7 @@ public class PhysicsSystem {
                 timeLeft = 0;
             }
         }
-        if (DEBUG){
+        if (DEBUG) {
             long endTime = TimeUtils.millis();
             lastPhysicsStepTime = (endTime - startTime);
         }
@@ -245,7 +267,7 @@ public class PhysicsSystem {
         for (Collidable c : collidables) {
             if (c.getMass() != Collidable.IMMOVABLE) {
                 tempVec2.set(c.getPosition());
-                tempVec2.add((float)(c.getVelocity().x * dt), (float)(c.getVelocity().y * dt));
+                tempVec2.add((float) (c.getVelocity().x * dt), (float) (c.getVelocity().y * dt));
                 c.getVelocity().scl((float) Math.pow(c.getFriction(), dt));
                 c.setPosition(tempVec2);
                 if (c.getVelocity().len2() < 2) c.setVelocity(Vector2.Zero);
@@ -256,7 +278,7 @@ public class PhysicsSystem {
     }
 
     private void addInfluence(Collidable c, Array<Influencer> influencers, double dt) {
-        for (Influencer i : influencers){
+        for (Influencer i : influencers) {
             if (i.shouldEffect(c)) {
                 float rangeSquare = i.getRange() * i.getRange();
                 tempVec2.set(i.getPosition()).sub(c.getPosition());
@@ -271,11 +293,14 @@ public class PhysicsSystem {
     }
 
     private IntersectionResult intersectCollidables(Collidable first, Collidable second, float timeLeft) {
-        if (first.getCollisionShape() instanceof CollisionShapeCircle && second.getCollisionShape() instanceof CollisionShapeCircle) {
+        if (first.getCollisionShape() instanceof CollisionShapeCircle
+                && second.getCollisionShape() instanceof CollisionShapeCircle) {
             return intersectCircleCircle(first, second, timeLeft);
-        } else if (first.getCollisionShape() instanceof CollisionShapeCircle && second.getCollisionShape() instanceof CollisionShapeSegment) {
+        } else if (first.getCollisionShape() instanceof CollisionShapeCircle
+                && second.getCollisionShape() instanceof CollisionShapeSegment) {
             return intersectCircleSegment(first, second, timeLeft);
-        } else if (first.getCollisionShape() instanceof CollisionShapeSegment && second.getCollisionShape() instanceof CollisionShapeCircle) {
+        } else if (first.getCollisionShape() instanceof CollisionShapeSegment
+                && second.getCollisionShape() instanceof CollisionShapeCircle) {
             return intersectCircleSegment(second, first, timeLeft);
         }
 
@@ -283,8 +308,8 @@ public class PhysicsSystem {
     }
 
     private IntersectionResult intersectCircleCircle(Collidable first, Collidable second, float timeLeft) {
-        CollisionShapeCircle firstShape = (CollisionShapeCircle)first.getCollisionShape();
-        CollisionShapeCircle secondShape = (CollisionShapeCircle)second.getCollisionShape();
+        CollisionShapeCircle firstShape = (CollisionShapeCircle) first.getCollisionShape();
+        CollisionShapeCircle secondShape = (CollisionShapeCircle) second.getCollisionShape();
         tempStart1.set(first.getPosition());
         frameVel.set(first.getVelocity().x * timeLeft, first.getVelocity().y * timeLeft);
         tempEnd1.set(tempStart1).add(frameVel);
@@ -292,7 +317,8 @@ public class PhysicsSystem {
         tempStart2.set(second.getPosition());
         frameVel2.set(second.getVelocity().x * timeLeft, second.getVelocity().y * timeLeft);
         tempEnd2.set(tempStart2).add(frameVel2);
-        Double time = intersectCircleCircle(tempStart1, tempStart2, frameVel, frameVel2, firstShape.radius, secondShape.radius);
+        Double time = intersectCircleCircle(
+                tempStart1, tempStart2, frameVel, frameVel2, firstShape.radius, secondShape.radius);
         if (time != null && time <= 1f) {
             IntersectionResult result = new IntersectionResult();
             result.time = time;
@@ -308,23 +334,25 @@ public class PhysicsSystem {
     }
 
     Vector2 nearestPoint = new Vector2();
+
     private IntersectionResult intersectCircleSegment(Collidable circle, Collidable segment, float timeLeft) {
         CollisionShapeSegment segmentShape = (CollisionShapeSegment) segment.getCollisionShape();
         CollisionShapeCircle circleShape = (CollisionShapeCircle) circle.getCollisionShape();
-        nearestPoint.set(Intersector.nearestSegmentPoint(segmentShape.start, segmentShape.end, circleShape.center, nearestPoint));
+        nearestPoint.set(Intersector.nearestSegmentPoint(
+                segmentShape.start, segmentShape.end, circleShape.center, nearestPoint));
         tempVec2.set(circle.getPosition()).sub(nearestPoint);
         float side = -Math.signum(segmentShape.normal.dot(tempVec2));
         if (side == 0) {
             side = 1;
         }
         float dist = tempVec2.set(circle.getPosition()).sub(nearestPoint).len() * side;
-        if (Math.abs(dist) < circleShape.radius){
+        if (Math.abs(dist) < circleShape.radius) {
             // already inside?
             return null;
         }
         frameVel.set(circle.getVelocity().x * timeLeft, circle.getVelocity().y * timeLeft);
         float denom = -segmentShape.normal.dot(frameVel);
-        if (denom*dist >= 0) {
+        if (denom * dist >= 0) {
             return null;
         }
         float r = circleShape.radius;
@@ -335,7 +363,7 @@ public class PhysicsSystem {
             r = -r;
             normal.scl(-1f);
         }
-        double t = (r-dist)/denom;
+        double t = (r - dist) / denom;
         if (t <= 1.0) {
             IntersectionResult result = new IntersectionResult();
             result.time = t;
@@ -344,24 +372,33 @@ public class PhysicsSystem {
             return result;
         }
         return null;
-
     }
 
     static Vector2 s = new Vector2();
     static Vector2 v = new Vector2();
-    private Double intersectCircleCircle(Vector2 pos1, Vector2 pos2, Vector2 vel1, Vector2 vel2, float rad1, float rad2) {
+
+    private Double intersectCircleCircle(
+            Vector2 pos1, Vector2 pos2, Vector2 vel1, Vector2 vel2, float rad1, float rad2) {
         return intersectCircleCircle(pos1.x, pos1.y, pos2.x, pos2.y, vel1.x, vel1.y, vel2.x, vel2.y, rad1, rad2);
     }
 
-    private Double intersectCircleCircle(float pos1x, float pos1y, float pos2x, float pos2y,
-                                        float vel1x, float vel1y, float vel2x, float vel2y,
-                                        float rad1, float rad2) {
+    private Double intersectCircleCircle(
+            float pos1x,
+            float pos1y,
+            float pos2x,
+            float pos2y,
+            float vel1x,
+            float vel1y,
+            float vel2x,
+            float vel2y,
+            float rad1,
+            float rad2) {
         Double t;
         s.set(pos2x, pos2y).sub(pos1x, pos1y);
         v.set(vel2x, vel2y).sub(vel1x, vel1y);
         float r = rad1 + rad2;
         float c = s.dot(s) - r * r;
-        if (c < 0){
+        if (c < 0) {
             // Already overlap early out
             t = 0.0;
             return t;
@@ -391,11 +428,9 @@ public class PhysicsSystem {
     }
 
     private boolean doCircleCircleOverlap(CollisionShapeCircle first, CollisionShapeCircle second) {
-        return Math.abs((first.center.x - second.center.x) *
-                        (first.center.x - second.center.x) +
-                        (first.center.y - second.center.y) *
-                        (first.center.y - second.center.y)) <
-            (first.radius + second.radius) * (first.radius + second.radius);
+        return Math.abs((first.center.x - second.center.x) * (first.center.x - second.center.x)
+                        + (first.center.y - second.center.y) * (first.center.y - second.center.y))
+                < (first.radius + second.radius) * (first.radius + second.radius);
     }
 
     private boolean doCircleSegmentOverlap(CollisionShapeCircle circle, CollisionShapeSegment segment) {
@@ -409,13 +444,13 @@ public class PhysicsSystem {
         normal.nor();
         incoming.nor();
         float iDotN = incoming.dot(normal);
-        incoming.set(incoming.x - 2f * normal.x * iDotN,
-                incoming.y - 2f * normal.y * iDotN)
-            .nor().scl(initalSize);
+        incoming.set(incoming.x - 2f * normal.x * iDotN, incoming.y - 2f * normal.y * iDotN)
+                .nor()
+                .scl(initalSize);
         return incoming;
     }
 
-    public void debugRender(SpriteBatch batch, NinePatch ninePatch){
+    public void debugRender(SpriteBatch batch, NinePatch ninePatch) {
         quadTree.renderDebug(batch, ninePatch);
     }
 }
