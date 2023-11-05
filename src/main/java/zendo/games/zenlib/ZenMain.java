@@ -151,10 +151,10 @@ public abstract class ZenMain<AssetsType extends ZenAssets> extends ApplicationA
         var screens = transition.screens;
 
         screens.current.renderFrameBuffers(batch);
-        if (screens.next != null) {
-            transition.render(batch, windowCamera);
-        } else {
+        if (screens.next == null) {
             screens.current.render(batch);
+        } else {
+            transition.render(batch, windowCamera);
         }
     }
 
