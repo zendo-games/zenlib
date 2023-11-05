@@ -7,9 +7,9 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
-import com.kotcrab.vis.ui.widget.VisTextButton;
-import zendo.games.zenlib.assets.ZenPatch;
 import zendo.games.zenlib.screens.ZenScreen;
+import zendo.games.zenlib.ui.ZenTextButton;
+import zendo.games.zenlib.ui.ZenWindow;
 
 public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
 
@@ -69,16 +69,16 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
         protected void initializeUI() {
             super.initializeUI();
 
-            var button = new VisTextButton("Switch to screen 2");
-            button.setPosition(100, 100);
-            button.getStyle().up = ZenPatch.glass_active.ninePatchDrawable;
+            var window = new ZenWindow(300f, 400f);
+            var button = new ZenTextButton(100f, 100f, "Switch to screen 2");
             button.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     game.setScreen(new TestScreen2());
                 }
             });
-            uiStage.addActor(button);
+            window.add(button);
+            uiStage.addActor(window);
         }
 
         @Override
@@ -123,9 +123,8 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
         protected void initializeUI() {
             super.initializeUI();
 
-            var button = new VisTextButton("Switch to screen 1");
+            var button = new ZenTextButton("Switch to screen 1");
             button.setPosition(windowCamera.viewportWidth - button.getWidth() - 100, 100);
-            button.getStyle().up = ZenPatch.glass_active.ninePatchDrawable;
             button.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
