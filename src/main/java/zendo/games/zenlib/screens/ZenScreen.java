@@ -34,6 +34,7 @@ public abstract class ZenScreen implements Disposable {
         this.pointerPos = new Vector3();
         this.worldCamera = new OrthographicCamera();
         this.viewport = new ScreenViewport(worldCamera);
+        this.viewport.update(main.config.window.width, main.config.window.height, true);
         this.exitingScreen = false;
 
         initializeUI();
