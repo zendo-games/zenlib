@@ -1,5 +1,9 @@
 package zendo.games.zenlib;
 
+import static zendo.games.zenlib.particles.ZenParticleSpawner.SpawnParams;
+import static zendo.games.zenlib.particles.ZenParticleSpawner.ZenEffectType;
+import static zendo.games.zenlib.particles.ZenParticleSystem.Layer;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
@@ -13,6 +17,8 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import space.earlygrey.shapedrawer.ShapeDrawer;
+import zendo.games.zenlib.particles.ZenParticleSpawner;
+import zendo.games.zenlib.particles.ZenParticleSystem;
 import zendo.games.zenlib.physics.*;
 import zendo.games.zenlib.screens.ZenScreen;
 import zendo.games.zenlib.ui.ZenTextButton;
@@ -62,12 +68,19 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
     // ------------------------------------------------------------------------
 
     public static class TestScreen1 extends ZenScreen {
+
+        ZenParticleSystem particles;
+        ZenParticleSpawner<Assets> spawner;
+
         public TestScreen1() {
             // override the default 'ScreenViewport'
             int screenWidth = config.window.width / 2;
             int screenHeight = config.window.height / 2;
             this.viewport = new StretchViewport(screenWidth, screenHeight, worldCamera);
             this.viewport.apply(true);
+
+            this.particles = new ZenParticleSystem();
+            this.spawner = new ZenParticleSpawner<>(game.assets);
 
             Gdx.input.setInputProcessor(uiStage);
         }
@@ -89,12 +102,31 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
         }
 
         @Override
+        public void update(float dt) {
+            super.update(dt);
+
+            if (Gdx.input.isTouched()) {
+                pointerPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+                worldCamera.unproject(pointerPos);
+
+                var info = new SpawnParams();
+                info.x = pointerPos.x;
+                info.y = pointerPos.y;
+                spawner.spawn(particles, ZenEffectType.point, info);
+            }
+
+            particles.update(dt);
+        }
+
+        @Override
         public void render(SpriteBatch batch) {
             ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
             batch.setProjectionMatrix(worldCamera.combined);
             batch.begin();
             {
+                particles.draw(batch, Layer.background);
+
                 var image = game.assets.gdx;
                 var scale = 1 / 4f;
                 var imageWidth = scale * image.getWidth();
@@ -105,6 +137,10 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
                         (worldCamera.viewportHeight - imageHeight) / 2f,
                         imageWidth,
                         imageHeight);
+
+                particles.draw(batch, Layer.middle);
+
+                particles.draw(batch, Layer.foreground);
             }
             batch.end();
             uiStage.draw();
@@ -116,12 +152,19 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
     // ------------------------------------------------------------------------
 
     public static class TestScreen2 extends ZenScreen {
+
+        ZenParticleSystem particles;
+        ZenParticleSpawner<Assets> spawner;
+
         public TestScreen2() {
             // override the default 'ScreenViewport'
             int screenWidth = config.window.width / 4;
             int screenHeight = config.window.height / 4;
             this.viewport = new StretchViewport(screenWidth, screenHeight, worldCamera);
             this.viewport.apply(true);
+
+            this.particles = new ZenParticleSystem();
+            this.spawner = new ZenParticleSpawner<>(game.assets);
 
             Gdx.input.setInputProcessor(uiStage);
         }
@@ -142,12 +185,31 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
         }
 
         @Override
+        public void update(float dt) {
+            super.update(dt);
+
+            if (Gdx.input.isTouched()) {
+                pointerPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+                worldCamera.unproject(pointerPos);
+
+                var info = new SpawnParams();
+                info.x = pointerPos.x;
+                info.y = pointerPos.y;
+                spawner.spawn(particles, ZenEffectType.point, info);
+            }
+
+            particles.update(dt);
+        }
+
+        @Override
         public void render(SpriteBatch batch) {
             ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
             batch.setProjectionMatrix(worldCamera.combined);
             batch.begin();
             {
+                particles.draw(batch, Layer.background);
+
                 var image = game.assets.gdx;
                 var scale = 2 / 4f;
                 var imageWidth = scale * image.getWidth();
@@ -158,6 +220,10 @@ public class ZenlibMainTest extends ZenMain<ZenlibMainTest.Assets> {
                         (worldCamera.viewportHeight - imageHeight) / 2f,
                         imageWidth,
                         imageHeight);
+
+                particles.draw(batch, Layer.middle);
+
+                particles.draw(batch, Layer.foreground);
             }
             batch.end();
             uiStage.draw();
