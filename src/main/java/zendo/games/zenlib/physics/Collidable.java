@@ -40,5 +40,5 @@ public interface Collidable {
 
     float getAngularMomentum();
 
-    float addAngularMomentum(float dA);
+    void addAngularMomentum(float dA);
 }

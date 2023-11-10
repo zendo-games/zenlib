@@ -42,12 +42,14 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
             Collidable bouncer = col1;
             Collidable solid = col2;
 
-            normal.set(position).sub(bouncer.getPosition()).nor();
+
 
             if (col1.getMass() == Collidable.IMMOVABLE) {
                 bouncer = col2;
                 solid = col1;
             }
+
+            normal.set(position).sub(bouncer.getPosition()).nor();
 
             // add in rotation
             bouncer.addAngularMomentum(normal.dot(bouncer.getVelocity()));
