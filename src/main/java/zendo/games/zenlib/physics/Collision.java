@@ -1,5 +1,6 @@
 package zendo.games.zenlib.physics;
 
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Pool;
 
@@ -9,11 +10,13 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
     public Vector2 normal;
     public Collidable col1;
     public Collidable col2;
+    public Vector2 tempVec;
 
     public Collision() {
         this.t = 0;
         this.position = new Vector2();
         this.normal = new Vector2();
+        tempVec = new Vector2();
     }
 
     public void init(double t, Vector2 pos, Vector2 normal, Collidable col1, Collidable col2) {
@@ -52,7 +55,10 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
             normal.set(position).sub(bouncer.getPosition()).nor();
 
             // add in rotation
-            bouncer.addAngularMomentum(normal.dot(bouncer.getVelocity()));
+            tempVec.set(bouncer.getVelocity()).nor();
+            float aR = 1f - normal.dot(tempVec);
+            aR *= Intersector.pointLineSide(position.x , position.y, bouncer.getPosition().x, bouncer.getPosition().y, bouncer.getPosition().x + tempVec.x, bouncer.getPosition().y + tempVec.y);
+            bouncer.addAngularMomentum(aR);
 
             bouncer.setVelocity(PhysicsSystem.reflectVector(bouncer.getVelocity(), normal));
 
