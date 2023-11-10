@@ -60,6 +60,7 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
             tempVec.set(bouncer.getVelocity()).nor();
             float aR = 1f - normal.dot(tempVec);
             aR *= Intersector.pointLineSide(position.x , position.y, bouncer.getPosition().x, bouncer.getPosition().y, bouncer.getPosition().x + tempVec.x, bouncer.getPosition().y + tempVec.y);
+            aR *= bouncer.getVelocity().len();
             bouncer.addAngularMomentum(aR);
 
             bouncer.setVelocity(PhysicsSystem.reflectVector(bouncer.getVelocity(), normal));
@@ -71,12 +72,13 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
 
 
         } else {
-
+            float totalSpeed = tempVec.set(col1.getVelocity()).add(col2.getVelocity()).len();
             // add in rotation
             tempNormal.set(position).sub(col1.getPosition()).nor();
             tempVec.set(col1.getVelocity()).nor();
             float aR = 1f - tempNormal.dot(tempVec);
             aR *= Intersector.pointLineSide(position.x , position.y, col1.getPosition().x, col1.getPosition().y, col1.getPosition().x + tempVec.x, col1.getPosition().y + tempVec.y);
+            aR *= totalSpeed;
             col1.addAngularMomentum(aR);
 
             // add in rotation
@@ -84,6 +86,7 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
             tempVec.set(col2.getVelocity()).nor();
             aR = 1f - tempNormal.dot(tempVec);
             aR *= Intersector.pointLineSide(position.x , position.y, col2.getPosition().x, col2.getPosition().y, col2.getPosition().x + tempVec.x, col2.getPosition().y + tempVec.y);
+            aR *= totalSpeed;
             col2.addAngularMomentum(aR);
 
             float p = 2
