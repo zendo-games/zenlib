@@ -270,7 +270,7 @@ public class PhysicsSystem {
                 tempVec2.add((float) (c.getVelocity().x * dt), (float) (c.getVelocity().y * dt));
                 c.getVelocity().scl((float) Math.pow(c.getFriction(), dt));
                 c.setPosition(tempVec2);
-                if (c.getVelocity().len2() < 2) c.setVelocity(Vector2.Zero);
+                if (c.getVelocity().len2() < 1) c.setVelocity(Vector2.Zero);
                 addInfluence(c, influencers, dt);
                 // TODO: update rotations?
             }
