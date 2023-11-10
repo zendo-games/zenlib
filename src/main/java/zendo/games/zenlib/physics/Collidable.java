@@ -37,4 +37,8 @@ public interface Collidable {
     void collidedWith(Collidable object);
 
     boolean shouldCollideWith(Collidable object);
+
+    float getAngularMomentum();
+
+    float addAngularMomentum(float dA);
 }

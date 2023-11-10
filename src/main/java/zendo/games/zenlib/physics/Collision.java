@@ -38,18 +38,28 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
         col2.collidedWith(col1);
 
         if (col1.getMass() == Collidable.IMMOVABLE || col2.getMass() == Collidable.IMMOVABLE) {
+
             Collidable bouncer = col1;
             Collidable solid = col2;
+
+            normal.set(position).sub(bouncer.getPosition()).nor();
+
             if (col1.getMass() == Collidable.IMMOVABLE) {
                 bouncer = col2;
                 solid = col1;
             }
+
+            // add in rotation
+            bouncer.addAngularMomentum(normal.dot(bouncer.getVelocity()));
+
             bouncer.setVelocity(PhysicsSystem.reflectVector(bouncer.getVelocity(), normal));
 
             // Scoot it away a little bit
-            normal.set(position).sub(bouncer.getPosition()).nor();
+
             Vector2 oldCenter = bouncer.getPosition();
             bouncer.setPosition(oldCenter.x + .001f * -normal.x, oldCenter.y + .001f * -normal.y);
+
+
         } else {
             float p = 2
                     * (col1.getVelocity().x * normal.x
