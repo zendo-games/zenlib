@@ -69,6 +69,21 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
 
 
         } else {
+
+            // add in rotation
+            normal.set(position).sub(col1.getPosition()).nor();
+            tempVec.set(col1.getVelocity()).nor();
+            float aR = 1f - normal.dot(tempVec);
+            aR *= Intersector.pointLineSide(position.x , position.y, col1.getPosition().x, col1.getPosition().y, col1.getPosition().x + tempVec.x, col1.getPosition().y + tempVec.y);
+            col1.addAngularMomentum(aR);
+
+            // add in rotation
+            normal.set(position).sub(col2.getPosition()).nor();
+            tempVec.set(col2.getVelocity()).nor();
+            aR = 1f - normal.dot(tempVec);
+            aR *= Intersector.pointLineSide(position.x , position.y, col2.getPosition().x, col2.getPosition().y, col2.getPosition().x + tempVec.x, col2.getPosition().y + tempVec.y);
+            col1.addAngularMomentum(aR);
+
             float p = 2
                     * (col1.getVelocity().x * normal.x
                             + col1.getVelocity().y * normal.y
