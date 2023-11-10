@@ -61,6 +61,7 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
             float aR = 1f - normal.dot(tempVec);
             aR *= Intersector.pointLineSide(position.x , position.y, bouncer.getPosition().x, bouncer.getPosition().y, bouncer.getPosition().x + tempVec.x, bouncer.getPosition().y + tempVec.y);
             aR *= bouncer.getVelocity().len();
+            aR *= bouncer.getMass();
             bouncer.addAngularMomentum(aR);
 
             bouncer.setVelocity(PhysicsSystem.reflectVector(bouncer.getVelocity(), normal));
