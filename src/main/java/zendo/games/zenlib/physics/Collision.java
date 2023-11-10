@@ -11,12 +11,14 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
     public Collidable col1;
     public Collidable col2;
     public Vector2 tempVec;
+    public Vector2 tempNormal;
 
     public Collision() {
         this.t = 0;
         this.position = new Vector2();
         this.normal = new Vector2();
         tempVec = new Vector2();
+        tempNormal = new Vector2();
     }
 
     public void init(double t, Vector2 pos, Vector2 normal, Collidable col1, Collidable col2) {
@@ -71,16 +73,16 @@ public class Collision implements Comparable<Collision>, Pool.Poolable {
         } else {
 
             // add in rotation
-            normal.set(position).sub(col1.getPosition()).nor();
+            tempNormal.set(position).sub(col1.getPosition()).nor();
             tempVec.set(col1.getVelocity()).nor();
-            float aR = 1f - normal.dot(tempVec);
+            float aR = 1f - tempNormal.dot(tempVec);
             aR *= Intersector.pointLineSide(position.x , position.y, col1.getPosition().x, col1.getPosition().y, col1.getPosition().x + tempVec.x, col1.getPosition().y + tempVec.y);
             col1.addAngularMomentum(aR);
 
             // add in rotation
-            normal.set(position).sub(col2.getPosition()).nor();
+            tempNormal.set(position).sub(col2.getPosition()).nor();
             tempVec.set(col2.getVelocity()).nor();
-            aR = 1f - normal.dot(tempVec);
+            aR = 1f - tempNormal.dot(tempVec);
             aR *= Intersector.pointLineSide(position.x , position.y, col2.getPosition().x, col2.getPosition().y, col2.getPosition().x + tempVec.x, col2.getPosition().y + tempVec.y);
             col2.addAngularMomentum(aR);
 
