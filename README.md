@@ -1,38 +1,158 @@
-# Library Template using libGDX and Gradle 9.x
+# zenlib
 
-Change this to fit your library!
+Zendo Games' shared [libGDX](https://libgdx.com/) game library: the framework code, tooling hooks,
+and starter assets we would otherwise copy into every new project.
 
-Normally you use this repo by forking it, making any changes to match future projects you will want to make,
-and then using this repo as a template when you make a new project. This often involves changing the packages
-from `com.github.tommyettinger` to your own reverse domain name or to use your own GitHub username.
+> **Status:** early development (`0.1.0-SNAPSHOT`). Nothing is published yet and the API will change.
 
-You'll want to edit gradle.properties to match your library's name, description, author, license, and so on.
-You probably also want to edit build.gradle to match the projectName and group to what you want to use.
+## What's in it
 
-You should "Find in Files" and search for any places that use the word "template" in order to find anything
-you will want to replace. The search should be case-insensitive.
+Planned scope, built on a small set of dependencies that zenlib exposes to games:
 
-This includes some extra configuration so that you can deploy more easily to [JitPack](https://jitpack.io). If you're
-testing a specific commit and don't want to push a release to GitHub or Maven Central just to test (especially
-if testing by seeing if a user can build with your library), then JitPack is a great option. It can also be an
-excellent way of making GitHub releases available via Maven or Gradle dependencies. The `jitpack.yml` file this
-includes defaults to Java 21; you can potentially raise this as high as 25, though that might cause problems
-with Kotlin or libraries like Kryo, or as low as 11 (the minimum for the publishing plugin this uses). JDK 21
-may warn if you target Java 8, though this is only a warning. It has better generated JavaDocs than earlier
-versions, though, so using 21 seems good.
+| Area                           | Built on                                                      |
+|--------------------------------|---------------------------------------------------------------|
+| Game framework / ECS           | [Ashley](https://github.com/libgdx/ashley)                    |
+| Fonts and text                 | [TextraTypist](https://github.com/tommyettinger/textratypist) |
+| Debug UI                       | [xImGui](https://github.com/xpenatan/xImGui)                  |
+| Bundled assets (fonts, images) | loaded from the classpath                                     |
 
-Regardless of which JDK version JitPack uses to build, the default sourceCompatibility, targetCompatibility, and
-release are set to JDK 8, which supports many of the most convenient recent Java features, but not all. You can
-increase those to a higher version to get features like `var`, records, pattern matching, etc. but that typically
-will limit your library to being used by desktop builds (LWJGL 2 or 3, server, or headless). Using the language
-level of Java 8 is generally safe, but specific APIs added in Java 8 generally aren't available in RoboVM, GWT,
-or some versions of Android. You can go up to compatibility with 11 to get access to `var`, but then you lose
-all compatibility with RoboVM.
+## Platforms
 
-The test code, which goes in `src/test/java/`, uses compatibility with Java 8 by default, so you can use LWJGL3
-in tests out-of-the-box.
+| Platform | Backend                                            |
+|----------|----------------------------------------------------|
+| Desktop  | LWJGL3                                             |
+| Web      | [gdx-teavm](https://github.com/xpenatan/gdx-teavm) |
 
-This currently uses Gradle 9.x; if you want an earlier version that uses 8.x,
-[here you go for 8](https://github.com/tommyettinger/libgdx-library-template/releases/tag/v8.14.3)!
-If you still want the much-earlier version that uses Gradle 7,
-[here you go for 7](https://github.com/tommyettinger/libgdx-library-template/releases/tag/v7.6)!
+GWT is not supported.
+
+## Requirements
+
+- JDK 25
+- libGDX 1.14.2
+
+Dependency versions are pinned in [`gradle.properties`](gradle.properties):
+
+| Dependency   | Version  |
+|--------------|----------|
+| libGDX       | 1.14.2   |
+| Ashley       | 1.7.4    |
+| TextraTypist | 2.5.0    |
+| xImGui       | 1.92.4.0 |
+
+## Using zenlib in a game
+
+zenlib is not published yet. Until it is, use it through a
+[composite build](#developing-against-a-game-project) from a sibling checkout.
+
+```groovy
+// core/build.gradle
+dependencies {
+    api "com.zendogames:zenlib:$zenlibVersion"
+}
+```
+
+```properties
+# gradle.properties
+zenlibVersion=0.1.0-SNAPSHOT
+```
+
+The game also needs the repositories zenlib's dependencies come from:
+
+```groovy
+repositories {
+    mavenCentral()
+    maven { url = 'https://jitpack.io' }
+}
+```
+
+## Building
+
+```shell
+./gradlew build               # compile, test, and assemble jars
+./gradlew test
+./gradlew javadoc             # writes docs/apidocs
+./gradlew publishToMavenLocal # publishes library artifacts to local maven repo
+```
+
+Gradle output is set to `quiet` in `gradle.properties`; add `--info` when you need to see more.
+
+## Developing against a game project
+
+[zenlib-demo](https://github.com/zendo-games/zenlib-demo) is a
+[gdx-liftoff](https://github.com/libgdx/gdx-liftoff) project that consumes zenlib the way a real
+game does. It lives in its own repo and pulls zenlib in from a sibling checkout with a Gradle
+composite build, so library changes are picked up on the next build with no publishing step.
+
+```
+ZendoGames/
+  zenlib/         this repo
+  zenlib-demo/    gdx-liftoff project: core, lwjgl3, teavm
+```
+
+```groovy
+// zenlib-demo/settings.gradle
+
+// Builds zenlib from the sibling checkout, replacing the 'com.zendogames:zenlib' dependency.
+// Pass -PzenlibPublished to ignore the checkout and resolve the published artifact instead.
+def zenlibCheckout = file('../zenlib')
+def usePublished = providers.gradleProperty('zenlibPublished').isPresent()
+if (zenlibCheckout.exists() && !usePublished) {
+  includeBuild(zenlibCheckout) {
+    dependencySubstitution {
+      // Substitute JitPack coordinates for sibling checkout coordinates
+      substitute module('com.github.zendo-games:zenlib') using project(':')
+    }
+  }
+}
+```
+
+Gradle matches the dependency to this build by `group` (`com.zendogames`) and
+`rootProject.name` (`zenlib`). The requested version is ignored while the checkout is included.
+
+Any game project can use the same snippet to work against local zenlib sources.
+
+### What the composite build covers
+
+| Exercised                                                         | Not exercised                              |
+|-------------------------------------------------------------------|--------------------------------------------|
+| The built jar, including bundled assets and `META-INF/` resources | The published POM / Gradle module metadata |
+| `api` vs `compileOnly` visibility to the game                     | JitPack's build of this repo               |
+| Launcher-side dependencies (xImGui natives, gdx-teavm plugin)     | Maven Central signing and upload           |
+| TeaVM compilation of zenlib's bytecode                            |                                            |
+
+To check the right-hand column, publish locally and make the demo resolve the artifact
+(it needs `mavenLocal()` in its repositories, which liftoff adds by default):
+
+```shell
+# in zenlib
+./gradlew publishToMavenLocal
+
+# in zenlib-demo
+./gradlew lwjgl3:run -PzenlibPublished
+```
+
+### Things to know
+
+- When included, zenlib reads its own `gradle.properties` for dependency versions, but
+  `org.gradle.*` settings and the daemon JVM come from the including project.
+- IntelliJ imports both builds into one window when the game project is opened, so navigation,
+  refactoring, and debugging work across the boundary.
+
+## Project layout
+
+```
+build.gradle                                       library build and publishing
+gradle.properties                                  dependency versions and POM metadata
+src/main/java/com/zendogames/zenlib/               library sources
+src/main/resources/com/zendogames/zenlib/assets/   bundled assets
+src/test/java/com/zendogames/zenlib/               tests (JUnit 4, LWJGL3 backend)
+docs/apidocs/                                      generated Javadoc
+```
+
+## Credits
+
+Started from [tommyettinger/libgdx-library-template](https://github.com/tommyettinger/libgdx-library-template).
+
+## License
+
+[Apache License 2.0](LICENSE)
