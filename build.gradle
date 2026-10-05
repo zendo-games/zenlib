@@ -94,6 +94,14 @@ repositories {
     mavenLocal()
     mavenCentral()
     google()
+    maven {
+        // jImGui/jParser snapshot builds frozen under fixed versions, see vendor/README.md
+        url = uri('vendor/maven')
+        content {
+            includeGroup 'com.github.xpenatan.jImGui'
+            includeGroup 'com.github.xpenatan.jParser'
+        }
+    }
     //maven { url = 'https://central.sonatype.com/repository/maven-snapshots/' }
     // JitPack is a good repo to have if you depend on commit versions.
     // Having the below repo might cause problems if uploading to Maven Central.
@@ -110,9 +118,10 @@ dependencies {
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
     api "com.badlogicgames.ashley:ashley:$ashleyVersion"
     api "com.github.tommyettinger:textratypist:$textratypistVersion"
-
-    compileOnly "com.github.xpenatan.xImGui:imgui-core:$xImGuiVersion"
-    api "com.github.xpenatan.xImGui:gdx-shared-impl:$xImGuiVersion"
+    api "com.github.xpenatan.jImGui:imgui-core:$jImGuiVersion"
+    api "com.github.xpenatan.jImGui:gdx-gl-impl:$jImGuiVersion"
+    api "org.mini2Dx:universal-tween-engine:$universalTweenVersion"
+    api "space.earlygrey:shapedrawer:$shapeDrawerVersion"
 
     // "lwjgl3" could be changed to "headless" for command-line-only testing.
     testImplementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion" // if you want graphical tests

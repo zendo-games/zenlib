@@ -9,8 +9,7 @@ public class Zen {
         Zen.config = config;
         Time.init();
         Prefs.init(config.preferencesName);
-        Flags.register(ZenFlag.values());
-
+        Flags.init();
         Log.info(Zen.class.getSimpleName(), "library initialized " + config);
     }
 }
