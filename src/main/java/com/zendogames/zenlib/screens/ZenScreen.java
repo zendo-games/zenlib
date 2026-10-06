@@ -15,9 +15,12 @@ import com.github.tommyettinger.textra.Layout;
 import com.zendogames.zenlib.FramePool;
 import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.ZenGame;
+import com.zendogames.zenlib.input.ScreenInputProcessor;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public abstract class ZenScreen implements Screen {
+
+    private static final String TAG = "Screen";
 
     public final ZenGame game;
     //public final Assets assets;
@@ -26,6 +29,7 @@ public abstract class ZenScreen implements Screen {
     public final TweenManager tween;
     public final OrthographicCamera windowCamera;
     public final Stage uiStage;
+    public final ScreenInputProcessor inputProcessor;
 
     public InputMultiplexer inputMux;
     public OrthographicCamera worldCamera;
@@ -43,18 +47,27 @@ public abstract class ZenScreen implements Screen {
         this.shapes = this.game.shapes;
         this.tween  = this.game.tween;
         this.windowCamera = this.game.windowCamera;
-        this.uiStage  = new Stage(new ScreenViewport(windowCamera), batch);
-        this.inputMux = new InputMultiplexer();
-        this.inputMux.addProcessor(uiStage);
-        //this.inputMux.addProcessor(new ScreenInputHandler(this));
         this.worldCamera = new OrthographicCamera();
         //this.worldView = new WorldView(worldCamera);
+        this.uiStage  = new Stage(new ScreenViewport(windowCamera), batch);
+        this.inputProcessor = createInputProcessor();
+        this.inputMux = new InputMultiplexer();
+        this.inputMux.addProcessor(uiStage);
+        this.inputMux.addProcessor(inputProcessor);
+    }
+
+    /**
+     * Override to return a game screen specific handler. Runs inside this constructor, before the subclass body,
+     * so return {@code new MyHandler(this)} and read screen fields from the handler at event time only.
+     */
+    protected ScreenInputProcessor createInputProcessor() {
+        return new ScreenInputProcessor(this);
     }
 
     /** @see ApplicationListener#resize(int, int) */
     @Override
     public void resize(int width, int height) {
-        Log.debug("Screen", "%s resize -> (%d, %d)", getClass().getSimpleName(), width, height);
+        Log.debug(TAG, "%s resize -> (%d, %d)", getClass().getSimpleName(), width, height);
         // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
         // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
         if(width <= 0 || height <= 0) return;
@@ -67,25 +80,25 @@ public abstract class ZenScreen implements Screen {
     /** Called once, when this screen is handed to {@link ZenGame#setScreen}, before its first update or render. */
     @Override
     public void show() {
-        Log.debug("Screen", "%s show", getClass().getSimpleName());
+        Log.debug(TAG, "%s show", getClass().getSimpleName());
     }
 
     /** @see ApplicationListener#pause() */
     @Override
     public void pause() {
-        Log.debug("Screen", "%s pause", getClass().getSimpleName());
+        Log.debug(TAG, "%s pause", getClass().getSimpleName());
     }
 
     /** @see ApplicationListener#resume() */
     @Override
     public void resume() {
-        Log.debug("Screen", "%s resume", getClass().getSimpleName());
+        Log.debug(TAG, "%s resume", getClass().getSimpleName());
     }
 
     /** Called once, when this screen stops being the current screen, just before {@link #dispose()}. */
     @Override
     public void hide() {
-        Log.debug("Screen", "%s hide", getClass().getSimpleName());
+        Log.debug(TAG, "%s hide", getClass().getSimpleName());
     }
 
     /** Called when the screen should render itself.
@@ -95,7 +108,7 @@ public abstract class ZenScreen implements Screen {
     /** Called when this screen should release all resources. */
     @Override
     public void dispose() {
-        Log.debug("Screen", "%s dispose", getClass().getSimpleName());
+        Log.debug(TAG, "%s dispose", getClass().getSimpleName());
         //worldView.dispose();
         uiStage.dispose();
     }

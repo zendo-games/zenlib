@@ -10,6 +10,7 @@ public enum ZenFlag implements Flag {
     , LOG_INFO         (true,  FEATURE)
     , LOG_DEBUG        (false, FEATURE)
     , LOG_WARN         (true,  FEATURE)
+    , LOG_INPUT        (false, FEATURE) // one line per input event reaching a screen handler
     , RENDER_INTERP    (true,  FEATURE)
     , RENDER_FBO       (true,  FEATURE)
     , FRAME_STEP       (false, DEBUG)

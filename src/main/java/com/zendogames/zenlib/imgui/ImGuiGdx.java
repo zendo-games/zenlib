@@ -72,6 +72,16 @@ public class ImGuiGdx {
     public static boolean isLoading()     { return !isLoaded(); }
     public static boolean isInitialized() { return initialized; }
 
+    /** True while imgui is hovering or dragging one of its windows, so the game should ignore the pointer. */
+    public static boolean wantsMouse() {
+        return initialized && ImGui.GetIO().get_WantCaptureMouse();
+    }
+
+    /** True while an imgui widget has keyboard focus, so game key bindings should not fire. */
+    public static boolean wantsKeyboard() {
+        return initialized && ImGui.GetIO().get_WantCaptureKeyboard();
+    }
+
     public static InputProcessor input() {
         if (input == null) {
             Log.warn("ImGui", "input processor not initialized");
