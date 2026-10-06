@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.tommyettinger.textra.Font;
 import com.github.tommyettinger.textra.Layout;
+import com.zendogames.zenlib.FramePool;
 import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.ZenGame;
 import space.earlygrey.shapedrawer.ShapeDrawer;
@@ -117,9 +118,7 @@ public abstract class ZenScreen implements Screen {
     }
 
     protected Vector3 mouseWorldPosition() {
-        // TODO: restore FramePool
-//        var screenPos = FramePool.vec3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        var screenPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        var screenPos = FramePool.vec3(Gdx.input.getX(), Gdx.input.getY(), 0);
         return worldCamera.unproject(screenPos);
     }
 

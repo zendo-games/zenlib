@@ -10,6 +10,7 @@ public class Zen {
         Time.init();
         Prefs.init(config.preferencesName());
         Flags.init();
+        FramePool.init();
         Log.info(Zen.class.getSimpleName(), "library initialized " + config);
     }
 }

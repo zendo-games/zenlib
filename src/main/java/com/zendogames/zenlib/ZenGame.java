@@ -128,7 +128,7 @@ public abstract class ZenGame extends ApplicationAdapter {
         }
 
         // Update things that must update every tick, these keep running through a Time.pauseFor
-        //FramePool.get().resetAll(); // TODO: add FramePool (including reflection for TeaVM)
+        FramePool.resetAll();
         tween.update(frameDt);
         windowCamera.update();
         currentScreen.alwaysUpdate(frameDt);

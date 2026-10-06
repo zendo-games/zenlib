@@ -1,19 +1,21 @@
 package com.zendogames.zenlib;
 
-import static com.zendogames.zenlib.Flag.Kind.*;
+import static com.zendogames.zenlib.Flag.Kind.DEBUG;
+import static com.zendogames.zenlib.Flag.Kind.FEATURE;
 
 // @formatter:off
 public enum ZenFlag implements Flag {
-      GLOBAL         (true,  FEATURE) // master switch
-    , FIXED_TIMESTEP (true,  FEATURE)
-    , LOG_INFO       (true,  FEATURE)
-    , LOG_DEBUG      (false, FEATURE)
-    , LOG_WARN       (true,  FEATURE)
-    , RENDER_INTERP  (true,  FEATURE)
-    , RENDER_FBO     (true,  FEATURE)
-    , FRAME_STEP     (false, DEBUG)
-    , DEBUG_RENDER   (false, DEBUG)
-    , SHOW_IMGUI     (false, DEBUG)
+      GLOBAL           (true,  FEATURE) // master switch
+    , FIXED_TIMESTEP   (true,  FEATURE)
+    , LOG_INFO         (true,  FEATURE)
+    , LOG_DEBUG        (false, FEATURE)
+    , LOG_WARN         (true,  FEATURE)
+    , RENDER_INTERP    (true,  FEATURE)
+    , RENDER_FBO       (true,  FEATURE)
+    , FRAME_STEP       (false, DEBUG)
+    , DEBUG_FRAME_POOL (false, DEBUG) // poison freed scratch objects with NaN
+    , DEBUG_RENDER     (false, DEBUG)
+    , SHOW_IMGUI       (false, DEBUG)
     ;
 
     private final Kind kind;
