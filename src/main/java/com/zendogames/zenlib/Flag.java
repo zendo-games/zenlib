@@ -23,13 +23,18 @@ public interface Flag {
 
     /** Mutable value of a single flag, owned by the enum constant that declares it. */
     class State {
+        private final boolean initial;
         boolean enabled;
 
         public State(Flag flag, boolean enabledByDefault) {
             // A JVM option overrides the default without touching code:
             //   -Dflag.{name_lowercase}=[true|false]
             var override = System.getProperty("flag." + flag.name().toLowerCase());
-            this.enabled = (override != null) ? Boolean.parseBoolean(override) : enabledByDefault;
+            this.initial = (override != null) ? Boolean.parseBoolean(override) : enabledByDefault;
+            this.enabled = initial;
         }
+
+        /** Back to the default (or its JVM override), dropping any changes made at runtime. */
+        void reset() { enabled = initial; }
     }
 }

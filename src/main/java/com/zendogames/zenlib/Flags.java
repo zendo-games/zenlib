@@ -7,6 +7,10 @@ public class Flags {
     private static final Array<Flag> all = new Array<>();
 
     static void init() {
+        // A second init starts clean: every flag the previous run registered goes back to its default
+        for (var flag : all) {
+            flag.state().reset();
+        }
         all.clear();
         register(ZenFlag.values());
     }

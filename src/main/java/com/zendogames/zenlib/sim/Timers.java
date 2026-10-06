@@ -56,7 +56,10 @@ public class Timers {
         }
     }
 
+    /** Cancels every timer. They are removed by the next {@link #update}, so an action can safely call this. */
     public void clear() {
-        timers.clear();
+        for (int i = 0; i < timers.size; i++) {
+            timers.get(i).cancelled = true;
+        }
     }
 }

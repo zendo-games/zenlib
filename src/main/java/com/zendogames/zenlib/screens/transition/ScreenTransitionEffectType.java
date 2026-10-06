@@ -48,8 +48,9 @@ public enum ScreenTransitionEffectType implements ScreenTransitionEffect {
 
     public static void disposeAll() {
         for (var effect : values()) {
-            if (effect.shader != null && effect.shader.isCompiled()) {
+            if (effect.shader != null) {
                 effect.shader.dispose();
+                effect.shader = null; // compiled again on next use, eg. after the game is recreated
             }
         }
     }

@@ -11,6 +11,9 @@ public class Time {
     /** Seconds since the previous frame, clamped. Zero while paused by {@link #pauseFor}*/
     public static float delta = 0;
 
+    /** Seconds since the previous frame, clamped. Never paused: for ui, tweens and anything else that runs through a {@link #pauseFor}. */
+    public static float frameDelta = 0;
+
     /** Seconds of unpaused time since startup. {@code double} value because {@code float} loses sub-frame precision after around a day of uptime. */
     public static double elapsed = 0;
 
@@ -20,13 +23,16 @@ public class Time {
     static void init() {
         startMillis = TimeUtils.millis();
         delta = 0;
+        frameDelta = 0;
         elapsed = 0;
         pauseRemaining = 0;
     }
 
-    /** Call once at the start of each frame. */
+    /** Called by {@link ZenGame} once at the start of each frame. */
     public static void update() {
-        delta = Math.min(MAX_DELTA, Gdx.graphics.getDeltaTime());
+        frameDelta = Math.min(MAX_DELTA, Gdx.graphics.getDeltaTime());
+        delta = frameDelta;
+
 
         if (pauseRemaining > 0) {
             pauseRemaining -= delta;
@@ -56,7 +62,7 @@ public class Time {
         return Math.floor((elapsed - offset - delta) / interval) < Math.floor((elapsed - offset) / interval);
     }
 
-    /** Alternatives false/true every {@code interval} seconds, eg. for blinking. */
+    /** Alternates false/true every {@code interval} seconds, eg. for blinking. */
     public static boolean betweenInterval(float interval, float offset) {
         return ((elapsed - offset) % (2.0 * interval)) >= interval;
     }

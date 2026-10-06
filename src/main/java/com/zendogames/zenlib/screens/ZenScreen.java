@@ -1,21 +1,19 @@
 package com.zendogames.zenlib.screens;
 
 import aurelienribon.tweenengine.TweenManager;
-import com.badlogic.gdx.*;
+import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.tommyettinger.textra.Font;
 import com.github.tommyettinger.textra.Layout;
-import com.zendogames.zenlib.ZenFlag;
+import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.ZenGame;
-import com.zendogames.zenlib.imgui.ImGuiGdx;
-import imgui.ImGui;
-import imgui.ImGuiImpl;
-import imgui.enums.ImGuiConfigFlags;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public abstract class ZenScreen implements Screen {
@@ -33,6 +31,8 @@ public abstract class ZenScreen implements Screen {
     //public WorldView worldView;
     public Font font;
     public Layout layout;
+
+    /** True while this screen is either side of a screen transition. */
     public boolean transitioning = false;
 
     public ZenScreen(ZenGame game) {
@@ -42,7 +42,7 @@ public abstract class ZenScreen implements Screen {
         this.shapes = this.game.shapes;
         this.tween  = this.game.tween;
         this.windowCamera = this.game.windowCamera;
-        this.uiStage  = new Stage(new ScreenViewport(windowCamera));
+        this.uiStage  = new Stage(new ScreenViewport(windowCamera), batch);
         this.inputMux = new InputMultiplexer();
         this.inputMux.addProcessor(uiStage);
         //this.inputMux.addProcessor(new ScreenInputHandler(this));
@@ -53,27 +53,39 @@ public abstract class ZenScreen implements Screen {
     /** @see ApplicationListener#resize(int, int) */
     @Override
     public void resize(int width, int height) {
+        Log.debug("Screen", "%s resize -> (%d, %d)", getClass().getSimpleName(), width, height);
         // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
         // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
         if(width <= 0 || height <= 0) return;
 
-        // Resize screen, parameters represent the new window size.
-        windowCamera.setToOrtho(false, width, height);
+        // Resize screen, parameters represent the new window size. The window camera is resized by ZenGame. */
         //worldView.resize(width, height);
         uiStage.getViewport().update(width, height, true);
     }
 
-    /** @see Screen#show() */
-    @Override public void show() {}
+    /** Called once, when this screen is handed to {@link ZenGame#setScreen}, before its first update or render. */
+    @Override
+    public void show() {
+        Log.debug("Screen", "%s show", getClass().getSimpleName());
+    }
 
     /** @see ApplicationListener#pause() */
-    @Override public void pause() {}
+    @Override
+    public void pause() {
+        Log.debug("Screen", "%s pause", getClass().getSimpleName());
+    }
 
     /** @see ApplicationListener#resume() */
-    @Override public void resume() {}
+    @Override
+    public void resume() {
+        Log.debug("Screen", "%s resume", getClass().getSimpleName());
+    }
 
-    /** @see Screen#hide() */
-    @Override public void hide() {}
+    /** Called once, when this screen stops being the current screen, just before {@link #dispose()}. */
+    @Override
+    public void hide() {
+        Log.debug("Screen", "%s hide", getClass().getSimpleName());
+    }
 
     /** Called when the screen should render itself.
      * @param delta The time in seconds since the last render. */
@@ -82,19 +94,26 @@ public abstract class ZenScreen implements Screen {
     /** Called when this screen should release all resources. */
     @Override
     public void dispose() {
+        Log.debug("Screen", "%s dispose", getClass().getSimpleName());
         //worldView.dispose();
         uiStage.dispose();
     }
 
+    /**
+     * Called every frame, even during a {@code Time.pauseFor}.
+     * @param delta {@code Time.frameDelta}, which is never zeroed by a pause.
+     */
     public void alwaysUpdate(float delta) {}
 
+    /**
+     * Called every frame except during a {@code Time.pauseFor}.
+     * @param delta {@code Time.delta}
+     */
     public void update(float delta) {
-//        Config.stepped_frame = false;
-        windowCamera.update();
         if (worldCamera != null) {
             worldCamera.update();
         }
-        uiStage.act(Math.min(delta, 1 / 30f));
+        uiStage.act(delta);
     }
 
     protected Vector3 mouseWorldPosition() {

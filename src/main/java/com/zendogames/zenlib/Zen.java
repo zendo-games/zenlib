@@ -8,7 +8,7 @@ public class Zen {
     public static void init(ZenConfig config) {
         Zen.config = config;
         Time.init();
-        Prefs.init(config.preferencesName);
+        Prefs.init(config.preferencesName());
         Flags.init();
         Log.info(Zen.class.getSimpleName(), "library initialized " + config);
     }
