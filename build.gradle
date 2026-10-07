@@ -7,6 +7,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.vanniktech:gradle-maven-publish-plugin:0.36.0'
+        classpath "com.github.tommyettinger:libgdx-texturepacker:$texturePackerVersion"
     }
 }
 
@@ -86,6 +87,21 @@ jar {
         attributes 'Implementation-Title': projectName, 'Implementation-Version': archiveVersion
     }
 }
+
+import com.badlogic.gdx.tools.texturepacker.TexturePacker
+
+// Packs sprites/ into the library atlas that ZenAtlas.SPRITES loads from the classpath
+tasks.register('texturePacker') {
+    def spritesDir = file('sprites')
+    def atlasDir   = file('src/main/resources/com/zendogames/zenlib/assets/sprites')
+    inputs.dir(spritesDir)
+    outputs.dir(atlasDir)
+    doLast {
+        TexturePacker.processIfModified(spritesDir.path, atlasDir.path, 'zen')
+    }
+}
+processResources.dependsOn texturePacker
+tasks.matching { it.name == 'sourcesJar' }.configureEach { dependsOn texturePacker }
 
 repositories {
     // You can comment out mavenLocal() if you have problems with GWT or other sources dependencies.

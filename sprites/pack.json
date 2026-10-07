@@ -1,0 +1,11 @@
+{
+  combineSubdirectories: true,
+  duplicatePadding: true,
+  paddingX: 4,
+  paddingY: 4,
+  maxWidth: 2048,
+  maxHeight: 2048,
+  filterMin: MipMapLinearLinear,
+  filterMag: Linear,
+  fast: false
+}

@@ -1,14 +1,16 @@
 package com.zendogames.zenlib.assets;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.TimeUtils;
 import com.zendogames.zenlib.Log;
+import com.zendogames.zenlib.ZenFlag;
 
 /**
  * Owns the {@link AssetManager} and runs the two phases over every registered {@link AssetType}:
@@ -23,26 +25,37 @@ public class Assets implements Disposable {
     /** Classpath root of the library's own files. */
     public static final String LIBRARY_PREFIX = "com/zendogames/zenlib/assets/";
 
+    /** Resolver that finds asset files in the library classpath or in internal storage based on it's name prefix. */
+    private static final FileHandleResolver FILE_HANDLE_RESOLVER = fileName ->
+            fileName.startsWith(LIBRARY_PREFIX)
+                    ? Gdx.files.classpath(fileName)
+                    : Gdx.files.internal(fileName);
+
+    /** When {@code ZenFlag.DEBUG_ASSET_LOAD} is enabled, enforce a minimum load duration to test the loading progress view. */
+    private static final float DEBUG_MIN_LOAD_SECS = 3f;
+
     private static final String TAG = "Assets";
 
     public final AssetManager mgr;
     public final Array<Disposable> disposables;
 
     private final Array<AssetType<?>> types;
+    private long loadStartMillis;
     private boolean queued;
     private boolean loaded;
 
     public Assets() {
-        this.mgr = new AssetManager();
+        this.mgr = new AssetManager(FILE_HANDLE_RESOLVER);
         this.mgr.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(mgr.getFileHandleResolver()));
         this.disposables = new Array<>();
         this.types = new Array<>();
+        this.loadStartMillis = TimeUtils.millis();
         this.queued = false;
         this.loaded = false;
 
-        // TODO: Library assets first: a category may use anything registered before it (eg. icons use an atlas)
-//        register(ZenAtlas.values());
-//        register(ZenIcon.values());
+        // Library assets first: a category may use anything registered before it (eg. icons use an atlas)
+        register(ZenAtlas.values());
+        register(ZenAnimHero.values());
     }
 
     /** Appends, in order. GAmes call this from {@code ZenGame.init()}, atlases and fonts before what uses them. */
@@ -60,35 +73,30 @@ public class Assets implements Disposable {
         loadStartMillis = TimeUtils.millis();
     }
 
-    // TODO: temp to simulate long loading
-    private static final float MIN_LOAD_SECONDS = 3f;
-    private long loadStartMillis;
-    private float elapsed() {
-        return MathUtils.clamp(TimeUtils.timeSinceMillis(loadStartMillis) / (MIN_LOAD_SECONDS * 1_000f), 0f, 1f);
-    }
-    // TODO: temp to simulate long loading
-
     /** Call every frame until it returns true; blocks only on the frame the manager finishes. */
     public boolean update() {
         if (!queued) throw new GdxRuntimeException("assets updated before load");
         if (loaded) return true;
         if (!mgr.update()) return false;
 
-        // TODO: temp to simulate long loading
-        if (elapsed() < 1f) return false;
-        // TODO: temp to simulate long loading
+        // Enforce a minimum loading duration if the debug flag is enabled
+        if (ZenFlag.DEBUG_ASSET_LOAD.on()) {
+            var elapsedSecs = TimeUtils.timeSinceMillis(loadStartMillis) / 1_000f;
+            if (elapsedSecs < DEBUG_MIN_LOAD_SECS) return false;
+        }
 
         for (var type : types) {
             init(type);
         }
         loaded = true;
-        Log.info(TAG, "loaded %d assets", types.size);
+
+        var elapsedSecs = TimeUtils.timeSinceMillis(loadStartMillis) / 1_000f;
+        Log.info(TAG, "loaded %d assets in %.2f seconds", types.size, elapsedSecs);
         return true;
     }
 
     public float progress() {
-        if (loaded) return 1;
-        return Math.min(mgr.getProgress(), elapsed()); // TODO: temp, remove the min and just use mgr progress if !loaded
+        return loaded ? 1 : mgr.getProgress();
     }
 
     /** Synchronous alternative to polling {@link #update()}. */
