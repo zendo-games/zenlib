@@ -9,14 +9,18 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.zendogames.zenlib.accessors.*;
+import com.zendogames.zenlib.assets.Assets;
 import com.zendogames.zenlib.imgui.ImGuiGdx;
 import com.zendogames.zenlib.screens.ZenScreen;
 import com.zendogames.zenlib.screens.transition.ScreenTransition;
@@ -27,16 +31,16 @@ import java.util.Optional;
 
 public abstract class ZenGame extends ApplicationAdapter {
 
-    //public ZenAssets zenAssets;
     public TweenManager tween;
     public InputMultiplexer inputMux;
     public OrthographicCamera windowCamera;
     public ScreenTransition screenTransition;
-
-    // TODO: move to assets
+    public Assets assets;
     public Texture pixel;
     public SpriteBatch batch;
     public ShapeDrawer shapes;
+    public GlyphLayout layout;
+    public BitmapFont defaultFont;
 
     /** Change with {@link #setScreen}, which is the only place a screen becomes current. */
     protected ZenScreen currentScreen;
@@ -60,9 +64,6 @@ public abstract class ZenGame extends ApplicationAdapter {
     public final void create() {
         Zen.init(config());
 
-        this.pixel = createPixel();
-        this.batch = new SpriteBatch();
-        this.shapes = new ShapeDrawer(batch, new TextureRegion(pixel));
         this.tween = new TweenManager();
         Tween.setWaypointsLimit(4);
         Tween.setCombinedAttributesLimit(4);
@@ -77,6 +78,12 @@ public abstract class ZenGame extends ApplicationAdapter {
         this.windowCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         this.windowCamera.update();
         this.screenTransition = new ScreenTransition();
+        this.assets = new Assets();
+        this.pixel = createPixel();
+        this.batch = new SpriteBatch();
+        this.shapes = new ShapeDrawer(batch, new TextureRegion(pixel));
+        this.layout = new GlyphLayout();
+        this.defaultFont = new BitmapFont();
 
 //        VisUI.setSkipGdxVersionCheck(true);
 //        VisUI.load(SkinType.ZENDO.get());
@@ -84,6 +91,7 @@ public abstract class ZenGame extends ApplicationAdapter {
         ImGuiGdx.load();
 
         init();
+        assets.load();
     }
 
     @Override
@@ -98,17 +106,30 @@ public abstract class ZenGame extends ApplicationAdapter {
 
         pixel.dispose();
         batch.dispose();
-//        assets.dispose();
+        defaultFont.dispose();
 //        VisUI.dispose();
         ImGuiGdx.dispose();
+        assets.dispose();
+    }
+
+    protected void renderLoading(float progress) {
+        ScreenUtils.clear(Color.LIGHT_GRAY);
+        batch.setProjectionMatrix(windowCamera.combined);
+        batch.begin();
+        layout.setText(defaultFont, "Loading %.0f%%...".formatted(progress * 100f), Color.BLACK, windowCamera.viewportWidth, Align.center, false);
+        defaultFont.draw(batch, layout, 0, (windowCamera.viewportHeight - layout.height) * 0.5f);
+        batch.end();
     }
 
     @Override
     public void render() {
         Time.update();
 
-        // First screen waits for imgui, which loads async
-        if (ImGuiGdx.isLoading()) return;
+        // First screen waits for imgui and assets, which load async
+        if (ImGuiGdx.isLoading() || !assets.update()) {
+            renderLoading(assets.progress());
+            return;
+        }
         if (currentScreen == null) {
             setScreen(createFirstScreen());
         }
