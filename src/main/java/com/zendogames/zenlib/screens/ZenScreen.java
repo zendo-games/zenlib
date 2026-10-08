@@ -7,15 +7,18 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.tommyettinger.textra.Font;
 import com.github.tommyettinger.textra.Layout;
 import com.zendogames.zenlib.FramePool;
 import com.zendogames.zenlib.Log;
+import com.zendogames.zenlib.Zen;
 import com.zendogames.zenlib.ZenGame;
+import com.zendogames.zenlib.assets.Assets;
 import com.zendogames.zenlib.input.ScreenInputProcessor;
+import com.zendogames.zenlib.render.WorldView;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public abstract class ZenScreen implements Screen {
@@ -23,17 +26,17 @@ public abstract class ZenScreen implements Screen {
     private static final String TAG = "Screen";
 
     public final ZenGame game;
-    //public final Assets assets;
+    public final Assets assets;
     public final SpriteBatch batch;
     public final ShapeDrawer shapes;
     public final TweenManager tween;
     public final OrthographicCamera windowCamera;
+    public final OrthographicCamera worldCamera;
+    public final WorldView worldView;
     public final Stage uiStage;
     public final ScreenInputProcessor inputProcessor;
 
     public InputMultiplexer inputMux;
-    public OrthographicCamera worldCamera;
-    //public WorldView worldView;
     public Font font;
     public Layout layout;
 
@@ -42,18 +45,27 @@ public abstract class ZenScreen implements Screen {
 
     public ZenScreen(ZenGame game) {
         this.game = game;
-        //this.assets = this.game.assets;
+        this.assets = this.game.assets;
         this.batch  = this.game.batch;
         this.shapes = this.game.shapes;
         this.tween  = this.game.tween;
         this.windowCamera = this.game.windowCamera;
         this.worldCamera = new OrthographicCamera();
-        //this.worldView = new WorldView(worldCamera);
+        this.worldView = createWorldView();
         this.uiStage  = new Stage(new ScreenViewport(windowCamera), batch);
         this.inputProcessor = createInputProcessor();
         this.inputMux = new InputMultiplexer();
         this.inputMux.addProcessor(uiStage);
         this.inputMux.addProcessor(inputProcessor);
+    }
+
+    /**
+     * Override to pick the world size or policy. Runs inside this constructor, before the subclass body,
+     * so only {@link #worldCamera} is available; configure the view inline and return it. The default is
+     * an {@code EXTEND} view of the size in {@link Zen#config}.
+     */
+    protected WorldView createWorldView() {
+        return new WorldView(worldCamera, Zen.config.framebufferWidth(), Zen.config.framebufferHeight());
     }
 
     /**
@@ -73,7 +85,7 @@ public abstract class ZenScreen implements Screen {
         if(width <= 0 || height <= 0) return;
 
         // Resize screen, parameters represent the new window size. The window camera is resized by ZenGame. */
-        //worldView.resize(width, height);
+        worldView.resize(width, height);
         uiStage.getViewport().update(width, height, true);
     }
 
@@ -101,15 +113,11 @@ public abstract class ZenScreen implements Screen {
         Log.debug(TAG, "%s hide", getClass().getSimpleName());
     }
 
-    /** Called when the screen should render itself.
-     * @param delta The time in seconds since the last render. */
-    public abstract void render(float delta);
-
     /** Called when this screen should release all resources. */
     @Override
     public void dispose() {
         Log.debug(TAG, "%s dispose", getClass().getSimpleName());
-        //worldView.dispose();
+        worldView.dispose();
         uiStage.dispose();
     }
 
@@ -124,19 +132,50 @@ public abstract class ZenScreen implements Screen {
      * @param delta {@code Time.delta}
      */
     public void update(float delta) {
-        if (worldCamera != null) {
-            worldCamera.update();
-        }
+        worldCamera.update();
         uiStage.act(delta);
     }
 
-    protected Vector3 mouseWorldPosition() {
-        var screenPos = FramePool.vec3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        return worldCamera.unproject(screenPos);
+    // ------------------------------------------------------------------------
+    // Rendering: offscreen passes first (ZenGame and ScreenTransition both call them before
+    // binding any framebuffer), then the onscreen pass, which is the world view followed by UI.
+    // ------------------------------------------------------------------------
+
+    /**
+     * Draw world-space content. The batch's projection is already {@link #worldCamera} and the target is
+     * cleared with {@code worldView.clearColor}; call {@code batch.begin()} / {@code end()} here. Runs once
+     * per frame on whichever path {@link WorldView} is using, so never assume a framebuffer is bound.
+     */
+    protected void renderWorld(SpriteBatch batch) {}
+
+    /** Draw window-space content over the world. The default draws {@link #uiStage}. */
+    protected void renderUI() {
+        uiStage.getViewport().apply();
+        uiStage.draw();
     }
 
-    public void renderOffscreenBuffers(SpriteBatch batch) {}
+    /** Framebuffer passes. Override to add your own, and call super so the world view gets its pass. */
+    public void renderOffscreenBuffers(SpriteBatch batch) {
+        worldView.renderOffscreen(batch, this::renderWorld);
+    }
+
+    /**
+     * Called when the screen should render itself. The default is the world view then {@link #renderUI()};
+     * override for a different arrangement.
+     * @param delta The time in seconds since the last render.
+     */
+    @Override
+    public void render(float delta) {
+        worldView.renderOnscreen(batch, windowCamera, this::renderWorld);
+        renderUI();
+    }
+
     public void renderImGui() {}
 
     public void initializeUI() {}
+
+    /** The mouse position in world units, through the world view, valid for this frame only. */
+    protected Vector2 mouseWorldPosition() {
+        return worldView.unproject(Gdx.input.getX(), Gdx.input.getY(), FramePool.vec2(0, 0));
+    }
 }

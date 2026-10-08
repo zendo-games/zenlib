@@ -4,7 +4,6 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.math.Vector2;
-import com.zendogames.zenlib.FramePool;
 import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.imgui.ImGuiGdx;
@@ -28,7 +27,7 @@ public class ScreenInputProcessor extends InputAdapter {
     /** Last pointer position in window pixels, top-left origin, as libGDX reports it. */
     public final Vector2 pointerScreen = new Vector2();
 
-    /** Last pointer position unprojected through the screen's world camera. */
+    /** Last pointer position in world units, through the screen's world view (outside {@code [0, worldWidth]} in a gutter). */
     public final Vector2 pointer = new Vector2();
 
     /** Drop every event while the screen is either side of a transition. */
@@ -114,32 +113,32 @@ public class ScreenInputProcessor extends InputAdapter {
 
     @Override
     public final boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        log("touchDown b%d p%d (%d, %d)", button, pointer, screenX, screenY);
         updatePointer(screenX, screenY);
+        log("touchDown b%d p%d screen(%d, %d) world(%.0f, %.0f)", button, pointer, screenX, screenY, this.pointer.x, this.pointer.y);
         if (!acceptsMouse()) return false;
         return onTouchDown(screenX, screenY, pointer, button);
     }
 
     @Override
     public final boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        log("touchUp b%d p%d (%d, %d)", button, pointer, screenX, screenY);
         updatePointer(screenX, screenY);
+        log("touchUp b%d p%d screen(%d, %d) world(%.0f, %.0f)", button, pointer, screenX, screenY, this.pointer.x, this.pointer.y);
         if (!acceptsMouse()) return false;
         return onTouchUp(screenX, screenY, pointer, button);
     }
 
     @Override
     public final boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
-        log("touchCancelled b%d p%d (%d, %d)", button, pointer, screenX, screenY);
         updatePointer(screenX, screenY);
+        log("touchCancelled b%d p%d screen(%d, %d) world(%.0f, %.0f)", button, pointer, screenX, screenY, this.pointer.x, this.pointer.y);
         if (!acceptsMouse()) return false;
         return onTouchCancelled(screenX, screenY, pointer, button);
     }
 
     @Override
     public final boolean touchDragged(int screenX, int screenY, int pointer) {
-        log("touchDragged p%d (%d, %d)", pointer, screenX, screenY);
         updatePointer(screenX, screenY);
+        log("touchDragged p%d screen(%d, %d) world(%.0f, %.0f)", pointer, screenX, screenY, this.pointer.x, this.pointer.y);
         if (!acceptsMouse()) return false;
         return onTouchDragged(screenX, screenY, pointer);
     }
@@ -169,8 +168,7 @@ public class ScreenInputProcessor extends InputAdapter {
 
     protected void updatePointer(int screenX, int screenY) {
         pointerScreen.set(screenX, screenY);
-        var world = screen.worldCamera.unproject(FramePool.vec3(screenX, screenY));
-        pointer.set(world.x, world.y);
+        screen.worldView.unproject(screenX, screenY, pointer);
     }
 
     protected void log(String msg, Object... args) {
