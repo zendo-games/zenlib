@@ -132,7 +132,6 @@ dependencies {
 
     //noinspection GDXOutdatedVersionGradleGroovy
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
-    api "com.badlogicgames.ashley:ashley:$ashleyVersion"
     api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
     api "com.github.tommyettinger:gdcrux:$gdcruxVersion"
     api "com.github.tommyettinger:textratypist:$textratypistVersion"
