@@ -15,6 +15,7 @@ public enum ZenFlag implements Flag {
     , RENDER_FBO       (true,  FEATURE)
     , FRAME_STEP       (false, DEBUG)
     , DEBUG_ASSET_LOAD (false, DEBUG) // set a minimum asset load duration to test the progress view
+    , DEBUG_ECS        (false, DEBUG) // reject a component instance attached twice (scans one type's storage per add)
     , DEBUG_FRAME_POOL (false, DEBUG) // poison freed scratch objects with NaN
     , DEBUG_RENDER     (false, DEBUG)
     , SHOW_IMGUI       (false, DEBUG)

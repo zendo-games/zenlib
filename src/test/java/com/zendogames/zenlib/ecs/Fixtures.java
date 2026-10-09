@@ -18,9 +18,6 @@ final class Fixtures {
             this.x = x;
             this.y = y;
         }
-
-        private final Link link = new Link(TYPE);
-        @Override public Link link() { return link; }
     }
 
     static final class Vel implements Component {
@@ -33,9 +30,6 @@ final class Fixtures {
             this.dx = dx;
             this.dy = dy;
         }
-
-        private final Link link = new Link(TYPE);
-        @Override public Link link() { return link; }
     }
 
     /** Records its hook calls. */
@@ -46,8 +40,6 @@ final class Fixtures {
         int removed = 0;
         Entity removedFrom = null;
 
-        private final Link link = new Link(TYPE);
-        @Override public Link link() { return link; }
 
         @Override public void onAdd(Entity e) { added++; }
 

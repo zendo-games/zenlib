@@ -3,6 +3,7 @@ package com.zendogames.zenlib.ecs;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.IntArray;
+import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.sim.SimulationStep;
 
 import java.util.Arrays;
@@ -240,6 +241,23 @@ public class World implements Disposable {
         return (slot != null && id < slot.length) ? (T) slot[id] : null;
     }
 
+    /**
+     * Debug check behind {@link ZenFlag#DEBUG_ECS}: the instance must not already sit in this
+     * world's storage under any entity. A scan of one type's slot, so linear in entities.
+     * Does not see an instance attached in another world.
+     */
+    void requireUnattached(ComponentType<?> type, Component component) {
+        var slot = (type.index < components.length) ? components[type.index] : null;
+        if (slot == null) {
+            return;
+        }
+        for (int id = 0; id < slot.length; id++) {
+            if (slot[id] == component) {
+                throw new IllegalStateException(type + " is already attached to Entity#" + id);
+            }
+        }
+    }
+
     void store(ComponentType<?> type, int id, Component component) {
         if (type.index >= components.length) {
             components = Arrays.copyOf(components, Math.max(ComponentType.count(), type.index + 1));
@@ -286,7 +304,6 @@ public class World implements Disposable {
             if (component != null) {
                 component.onRemove(e);
                 slot[e.id] = null;
-                component.link().entity = null;
             }
         }
         e.mask.clear();

@@ -40,7 +40,6 @@ public class EntityTest {
         assertTrue(Pos.has(entity));
         assertSame(pos, entity.get(Pos.TYPE));
         assertSame(pos, Pos.get(entity));
-        assertSame(entity, pos.entity());
         assertSame(Pos.TYPE, pos.type());
     }
 
@@ -62,7 +61,7 @@ public class EntityTest {
     }
 
     @Test
-    public void removeReturnsComponentRunsHookAndClearsLink() {
+    public void removeReturnsComponentRunsHookAndClearsSlot() {
         var hooked = new Hooked();
         entity.add(hooked);
         assertEquals(1, hooked.added);
@@ -73,7 +72,6 @@ public class EntityTest {
         assertSame(hooked, removed);
         assertEquals(1, hooked.removed);
         assertSame(entity, hooked.removedFrom);
-        assertNull(hooked.entity());
         assertNull(entity.get(Hooked.TYPE));
         assertFalse(entity.has(Hooked.TYPE));
     }
@@ -87,20 +85,41 @@ public class EntityTest {
 
         assertSame(second, entity.get(Hooked.TYPE));
         assertEquals(1, first.removed);
-        assertNull(first.entity());
+        assertSame(entity, first.removedFrom);
         assertEquals(1, second.added);
-        assertSame(entity, second.entity());
     }
 
+    /** The DEBUG_ECS path in {@code Entity.add}; the flag itself can't be toggled headless (it logs), so the check is called directly. */
     @Test
-    public void componentOwnedByAnotherEntityIsRejected() {
+    public void debugGuardRejectsAnInstanceAlreadyInStorage() {
         var pos = new Pos(0, 0);
+        var free = new Pos(1, 1);
         entity.add(pos);
-        var other = world.createEntity();
 
-        assertThrows(IllegalStateException.class, () -> other.add(pos));
-        assertSame(entity, pos.entity());
-        assertFalse(other.has(Pos.TYPE));
+        world.requireUnattached(Pos.TYPE, free);                        // not stored anywhere: fine
+        world.requireUnattached(Vel.TYPE, new Vel(0, 0));               // type with no storage yet: fine
+        var ex = assertThrows(IllegalStateException.class, () -> world.requireUnattached(Pos.TYPE, pos));
+        assertTrue(ex.getMessage(), ex.getMessage().contains("Entity#" + entity.id));
+
+        entity.remove(Pos.TYPE);
+        world.requireUnattached(Pos.TYPE, pos);                         // detached again: fine
+    }
+
+    /** The lookup is by exact class, so a class without its own registered TYPE (a subclass of one included) fails at add. */
+    @Test
+    public void unregisteredClassIsRejectedAtAdd() {
+        var unregistered = new Component() {};
+        var ex = assertThrows(IllegalStateException.class, () -> entity.add(unregistered));
+        assertTrue(ex.getMessage(), ex.getMessage().contains("not a registered component type"));
+        assertEquals(0, countComponents());
+    }
+
+    private int countComponents() {
+        int n = 0;
+        for (var key : new Family.Key[] { Pos.TYPE, Vel.TYPE, Hooked.TYPE }) {
+            if (entity.mask.get(key.index())) n++;
+        }
+        return n;
     }
 
     @Test
@@ -112,7 +131,7 @@ public class EntityTest {
         var other = world.createEntity();
         other.add(pos);
 
-        assertSame(other, pos.entity());
+        assertNull(entity.get(Pos.TYPE));
         assertSame(pos, other.get(Pos.TYPE));
     }
 

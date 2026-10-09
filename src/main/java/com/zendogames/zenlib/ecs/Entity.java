@@ -1,6 +1,7 @@
 package com.zendogames.zenlib.ecs;
 
 import com.badlogic.gdx.utils.Bits;
+import com.zendogames.zenlib.ZenFlag;
 
 /**
  * A handle to one entity in a {@link World}: an id into every component storage plus the mask
@@ -61,19 +62,18 @@ public final class Entity {
 
     /**
      * Attaches {@code component}, replacing (and removing, hooks included) one of the same type
-     * if present. The component must not belong to another entity.
+     * if present. An instance belongs to one entity at a time; attaching it twice is only
+     * detected while {@link ZenFlag#DEBUG_ECS} is on.
      */
     public <T extends Component> Entity add(T component) {
         requireAlive();
-        var link = component.link();
-        if (link.entity != null) {
-            throw new IllegalStateException(link.type + " already belongs to " + link.entity);
+        var type = component.type();
+        if (ZenFlag.DEBUG_ECS.on()) {
+            world.requireUnattached(type, component);
         }
-        var type = link.type;
         detach(type); // replacing: the old one leaves first, one membership refresh for both
         world.store(type, id, component);
         mask.set(type.index);
-        link.entity = this;
         component.onAdd(this);
         world.changed(this);
         return this;
@@ -97,7 +97,6 @@ public final class Entity {
         component.onRemove(this);
         world.store(type, id, null);
         mask.clear(type.index);
-        component.link().entity = null;
         return component;
     }
 

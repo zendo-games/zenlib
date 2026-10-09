@@ -61,7 +61,6 @@ public class WorldTest {
         assertFalse(e.isAlive());
         assertEquals(1, hooked.removed);
         assertSame(e, hooked.removedFrom);
-        assertNull(hooked.entity());
     }
 
     @Test

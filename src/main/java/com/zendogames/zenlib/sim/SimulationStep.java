@@ -15,6 +15,9 @@ public class SimulationStep {
     /** Fraction of a tick left in the accumulator, for render interpolation. */
     public float alpha = 1f;
 
+    /** Ticks stepped so far; one per {@link Tick#step} call. */
+    public int tick = 0;
+
     private float accumulator = 0f;
     private boolean stepRequested = false;
 
@@ -22,10 +25,21 @@ public class SimulationStep {
         stepRequested = true;
     }
 
+    /** Ticks for a duration authored in seconds, at least one so a positive duration is never zero. */
+    public static int ticks(float seconds) {
+        return Math.max(1, Math.round(seconds / FIXED_DT));
+    }
+
+    /** Seconds for a tick count, for display. */
+    public static float seconds(int ticks) {
+        return ticks * FIXED_DT;
+    }
+
     public void update(float dt, Tick tick) {
         if (ZenFlag.FRAME_STEP.on()) {
             if (stepRequested) {
                 tick.step(FIXED_DT);
+                this.tick++;
             }
             stepRequested = false;
             alpha = 1f;
@@ -34,6 +48,7 @@ public class SimulationStep {
 
         if (ZenFlag.FIXED_TIMESTEP.off()) {
             tick.step(dt);
+            this.tick++;
             alpha = 1f;
             return;
         }
@@ -42,6 +57,7 @@ public class SimulationStep {
         accumulator += dt;
         while (accumulator >= FIXED_DT && steps < MAX_SUBSTEPS) {
             tick.step(FIXED_DT);
+            this.tick++;
             accumulator -= FIXED_DT;
             steps++;
         }

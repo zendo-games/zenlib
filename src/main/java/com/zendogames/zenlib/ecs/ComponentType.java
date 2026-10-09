@@ -1,5 +1,7 @@
 package com.zendogames.zenlib.ecs;
 
+import java.util.HashMap;
+
 /**
  * Handle for one component class: its bit in every entity's mask and its index into each
  * world's storage. Registered once per class as a static field, see {@link Component}.
@@ -8,6 +10,8 @@ package com.zendogames.zenlib.ecs;
 public final class ComponentType<T extends Component> implements Family.Key {
 
     private static int count = 0;
+    private static final HashMap<Class<?>, ComponentType<?>> byClass = new HashMap<>();
+
 
     /** Hands out mask bits; shared with {@link Tag} so both live in one mask. */
     static int nextIndex() {
@@ -28,7 +32,16 @@ public final class ComponentType<T extends Component> implements Family.Key {
     }
 
     public static <T extends Component> ComponentType<T> register(Class<T> clazz) {
-        return new ComponentType<>(nextIndex(), clazz.getSimpleName());
+        var type = new ComponentType<T>(nextIndex(), clazz.getSimpleName());
+        byClass.put(clazz, type);
+        return type;
+    }
+
+    /** The type registered for exactly this class; throws for an unregistered class, a subclass of a registered one included. */
+    static ComponentType<?> of(Class<?> clazz) {
+        var type = byClass.get(clazz);
+        if (type == null) throw new IllegalStateException(clazz.getSimpleName() + " is not a registered component type");
+        return type;
     }
 
     /** The entity's component of this type, null when it has none. */
