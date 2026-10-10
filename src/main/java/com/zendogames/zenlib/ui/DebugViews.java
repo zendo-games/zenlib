@@ -1,0 +1,172 @@
+package com.zendogames.zenlib.ui;
+
+import com.github.xpenatan.jparser.runtime.helper.NativeBoolArray;
+import com.zendogames.zenlib.FramePool;
+import com.zendogames.zenlib.ecs.Family;
+import com.zendogames.zenlib.ecs.World;
+import com.zendogames.zenlib.ecs.components.Name;
+import com.zendogames.zenlib.ecs.components.Timers;
+import com.zendogames.zenlib.ecs.systems.ContactSystem;
+import imgui.ImGui;
+import imgui.enums.ImGuiTableColumnFlags;
+import imgui.enums.ImGuiTableFlags;
+
+/**
+ * {@link DebugView}s over library objects. Each factory captures what it reads and is created once
+ * per screen (a {@code world.family(...)} is interned, so creating the timers view per frame would
+ * be harmless, but the screen holding a field is a clearer). Everything here depends only on library
+ * types, which allows zenlib to provide some generic views out of the box.
+ */
+public final class DebugViews {
+
+    private DebugViews() {}
+
+    /** Per-type active, peak and free counts of the frame pool. */
+    public static DebugView framePool() {
+        return new DebugView() {
+            @Override public String title()          { return "FramePool"; }
+            @Override public boolean openByDefault() { return false; }
+            @Override public void draw() {
+                if (ImGui.BeginTable("frame-pool", 4, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Type",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Active", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Peak",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Free",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    for (var type : FramePool.types()) {
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(type.name());
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(FramePool.active(type)));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(FramePool.peak(type)));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(FramePool.free(type)));
+                    }
+                    ImGui.EndTable();
+                }
+            }
+        };
+    }
+
+    /** Entity count, tick, interpolation alpha, and a table of systems with live enabled toggles. */
+    public static DebugView ecs(World world) {
+        return new DebugView() {
+            @Override public String title() { return "ECS"; }
+            @Override public void draw() {
+                ImGui.TextUnformatted("entities: " + world.entities().size);
+                ImGui.SameLine(); ImGui.TextUnformatted("  tick: " + world.step.tick);
+                ImGui.SameLine(); ImGui.TextUnformatted("  alpha: %.3f".formatted(world.alpha()));
+                ImGui.SameLine(); ImGui.TextUnformatted("  updating: " + world.isUpdating());
+
+                if (ImGui.BeginTable("systems", 4, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("System",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Priority", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Runs",     ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Enabled",  ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    var systems = world.systems();
+                    for (int i = 0; i < systems.size; i++) {
+                        var system = systems.get(i);
+                        ImGui.PushID(i);
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(system.getClass().getSimpleName());
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(system.priority));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(system.runsOnTick() ? "tick" : "render");
+                        ImGui.TableNextColumn();
+                        Buffers.checkbox.setValue(0, system.enabled);
+                        if (ImGui.Checkbox("##enabled", Buffers.checkbox)) {
+                            system.enabled = Buffers.checkbox.getValue(0);
+                        }
+                        ImGui.PopID();
+                    }
+                    ImGui.EndTable();
+                }
+            }
+        };
+    }
+
+    /** Every active timer in the world: owner, name, time left, repeat. Rows follow {@code Timers} add order per entity. */
+    public static DebugView timers(World world) {
+        var family = world.family(Family.all(Timers.TYPE));
+        return new DebugView() {
+            @Override public String title() { return "Timers"; }
+            @Override public void draw() {
+                var entities = family.entities();
+                int total = 0;
+                for (int i = 0; i < entities.size; i++) total += Timers.get(entities.get(i)).size();
+                ImGui.TextUnformatted("entities: " + entities.size + "  timers: " + total);
+
+                if (ImGui.BeginTable("timers", 5, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Entity",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Timer",     ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Remaining", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Duration",  ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Repeat",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    for (int i = 0; i < entities.size; i++) {
+                        var e = entities.get(i);
+                        var list = Timers.get(e).timers();
+                        for (int j = 0; j < list.size; j++) {
+                            var timer = list.get(j);
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted(Name.of(e) + " " + e);
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted(timer.name);
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted("%.2fs (%d)".formatted(timer.remainingSeconds(), timer.remainingTicks()));
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted("%.2fs".formatted(timer.durationSeconds()));
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted(timer.isRepeating() ? "every" : "once");
+                        }
+                    }
+                    ImGui.EndTable();
+                }
+            }
+        };
+    }
+
+    /** This tick's contact count, the log toggles, and the ENTER / EXIT transition log, newest last. */
+    public static DebugView contacts(ContactSystem system) {
+        return new DebugView() {
+            @Override public String title() { return "Contacts"; }
+            @Override public void draw() {
+                ImGui.TextUnformatted("this tick: " + system.contacts.size);
+
+                Buffers.paused.setValue(0, system.logPaused);
+                if (ImGui.Checkbox("pause log (P)", Buffers.paused)) {
+                    system.logPaused = Buffers.paused.getValue(0);
+                }
+                ImGui.SameLine();
+                Buffers.blockedExits.setValue(0, system.logBlockedExits);
+                if (ImGui.Checkbox("blocked exits (X)", Buffers.blockedExits)) {
+                    system.logBlockedExits = Buffers.blockedExits.getValue(0);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("clear")) {
+                    system.log.clear();
+                }
+
+                if (ImGui.BeginChild("log", imgui.ImTemp.ImVec2_1(0, 200))) {
+                    for (var line : system.log) {
+                        ImGui.TextUnformatted(line);
+                    }
+                    if (!system.logPaused) {
+                        ImGui.SetScrollHereY(1f);
+                    }
+                }
+                ImGui.EndChild();
+            }
+        };
+    }
+
+    /**
+     * Native buffers allocated on first use by this holder class: a {@code NativeBoolArray} created
+     * before {@code ImGuiGdx.load()} crashes. One checkbox buffer is reused per table row; PushID
+     * keeps the repeated label unique.
+     */
+    private static final class Buffers {
+        static final NativeBoolArray checkbox     = new NativeBoolArray(1);
+        static final NativeBoolArray paused       = new NativeBoolArray(1);
+        static final NativeBoolArray blockedExits = new NativeBoolArray(1);
+    }
+
+    private static class TableFlags {
+        private static final ImGuiTableFlags TABLE = ImGuiTableFlags.Borders
+                .or(ImGuiTableFlags.RowBg).or(ImGuiTableFlags.SizingStretchSame);
+    }
+}
