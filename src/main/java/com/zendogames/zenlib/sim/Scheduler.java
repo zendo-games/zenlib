@@ -2,7 +2,7 @@ package com.zendogames.zenlib.sim;
 
 import com.badlogic.gdx.utils.Array;
 
-public class Timers {
+public class Scheduler {
 
     public static class Timer {
         private final Runnable action;
