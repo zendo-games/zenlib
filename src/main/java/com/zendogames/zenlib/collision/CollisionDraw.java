@@ -3,6 +3,8 @@ package com.zendogames.zenlib.collision;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
 import com.github.tommyettinger.gdcrux.PointI2;
+import com.zendogames.zenlib.FramePool;
+import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.collision.shapes.*;
 import com.zendogames.zenlib.ecs.Entity;
 import com.zendogames.zenlib.ecs.components.Collider;
@@ -26,6 +28,24 @@ public final class CollisionDraw {
         var entities = collision.family().entities();
         for (int i = 0; i < entities.size; i++) {
             entity(shapes, entities.get(i), color, lineWidth);
+        }
+    }
+
+    /**
+     * Like {@link #all(ShapeDrawer, CollisionWorld, Color, float)}, at each entity's interpolated render
+     * position so outlines sit on the sprites; {@code alpha} is {@code World.alpha()}.
+     * <strong>NOTE</strong> using this means that the visible location of the collider is <strong>not</strong>
+     * necessarily the actual world position of the collider, due to render interpolation, but it will
+     * look like it fits when RENDER_INTERP is enabled.
+     */
+    public static void all(ShapeDrawer shapes, CollisionWorld collision, Color color, float lineWidth, float alpha) {
+        var a = ZenFlag.RENDER_INTERP.on() ? alpha : 1f;
+        var entities = collision.family().entities();
+        for (int i = 0; i < entities.size; i++) {
+            var e = entities.get(i);
+            var pos = Position.get(e);
+            var at = FramePool.pi2(MathUtils.round(pos.renderX(a)), MathUtils.round(pos.renderY(a)));
+            shape(shapes, Collider.get(e).shape(), at, color, lineWidth);
         }
     }
 

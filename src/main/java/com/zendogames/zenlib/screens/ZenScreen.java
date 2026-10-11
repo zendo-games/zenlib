@@ -99,6 +99,7 @@ public abstract class ZenScreen implements Screen {
     @Override
     public void pause() {
         Log.debug(TAG, "%s pause", getClass().getSimpleName());
+        inputProcessor.clearHeld();
     }
 
     /** @see ApplicationListener#resume() */
@@ -111,6 +112,7 @@ public abstract class ZenScreen implements Screen {
     @Override
     public void hide() {
         Log.debug(TAG, "%s hide", getClass().getSimpleName());
+        inputProcessor.clearHeld();
     }
 
     /** Called when this screen should release all resources. */

@@ -4,6 +4,7 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Bits;
 import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.imgui.ImGuiGdx;
@@ -15,10 +16,13 @@ import static com.badlogic.gdx.Input.Keys.*;
  * A screen's slot in the input chain, after imgui and the screen's scene2d stage.
  * The {@code InputProcessor} methods are final: they log, track the pointer, drop
  * events that imgui wants or that arrive mid-transition, then call the {@code onXxx}
- * hooks. Games override the hooks and return true to consume an event. Held keys
- * may still be polled, gated by {@link ImGuiGdx#wantsKeyboard()}.
+ * hooks. Games override the hooks and return true to consume an event.
+ * <p>
+ * Held keys are recorded from the same gated events ({@link #isHeld}), so a system that
+ * polls them ({@code InputSystem}) never sees a key that imgui took. A release always clears
+ * the key, gated or not, and {@link #clearHeld} runs when the screen is hidden or paused.
  */
-public class ScreenInputProcessor extends InputAdapter {
+public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
 
     private static final String TAG = "Input";
 
@@ -32,6 +36,9 @@ public class ScreenInputProcessor extends InputAdapter {
 
     /** Drop every event while the screen is either side of a transition. */
     public boolean ignoreWhileTransitioning = true;
+
+    /** Keys whose keyDown passed the gates and have not been released since. */
+    private final Bits held = new Bits(256);
 
     public ScreenInputProcessor(ZenScreen screen) {
         this.screen = screen;
@@ -68,6 +75,20 @@ public class ScreenInputProcessor extends InputAdapter {
     }
 
     // ------------------------------------------------------------------------
+    // Held keys
+    // ------------------------------------------------------------------------
+
+    @Override
+    public boolean isHeld(int keycode) {
+        return (keycode >= 0 && held.get(keycode));
+    }
+
+    /** Forgets every held key, e.g. when the screen stops receiving events. */
+    public void clearHeld() {
+        held.clear();
+    }
+
+    // ------------------------------------------------------------------------
     // Gates
     // ------------------------------------------------------------------------
 
@@ -89,12 +110,14 @@ public class ScreenInputProcessor extends InputAdapter {
     public final boolean keyDown(int keycode) {
         log("keyDown %d", keycode);
         if (!acceptsKeyboard()) return false;
+        if (keycode >= 0) held.set(keycode);
         return onKeyDown(keycode);
     }
 
     @Override
     public final boolean keyUp(int keycode) {
         log("keyUp %d", keycode);
+        if (keycode >= 0) held.clear(keycode); // a release always counts, even one imgui wants
         if (keycode == ESCAPE && isShiftPressed() && Gdx.app.getType() == Application.ApplicationType.Desktop) {
             Log.info(TAG, "exit requested by shift+esc");
             Gdx.app.exit();

@@ -4,8 +4,13 @@ import com.github.xpenatan.jparser.runtime.helper.NativeBoolArray;
 import com.zendogames.zenlib.FramePool;
 import com.zendogames.zenlib.ecs.Family;
 import com.zendogames.zenlib.ecs.World;
+import com.zendogames.zenlib.ecs.components.Mover;
 import com.zendogames.zenlib.ecs.components.Name;
+import com.zendogames.zenlib.ecs.components.Position;
 import com.zendogames.zenlib.ecs.components.Timers;
+import com.zendogames.zenlib.ecs.movement.Motion;
+import com.zendogames.zenlib.ecs.movement.platformer.PlatformerMotion;
+import com.zendogames.zenlib.ecs.movement.topdown.TopDownMotion;
 import com.zendogames.zenlib.ecs.systems.ContactSystem;
 import imgui.ImGui;
 import imgui.enums.ImGuiTableColumnFlags;
@@ -118,6 +123,64 @@ public final class DebugViews {
                 }
             }
         };
+    }
+
+    /**
+     * Every mover in the world: position, velocity, this tick's hits, the motion class and its
+     * facts (mode, grounded, wall and facing for a platformer; facing for top-down).
+     */
+    public static DebugView movers(World world) {
+        var family = world.family(Family.all(Position.TYPE, Mover.TYPE));
+        return new DebugView() {
+            @Override public String title() { return "Movers"; }
+            @Override public void draw() {
+                var entities = family.entities();
+                ImGui.TextUnformatted("movers: " + entities.size);
+
+                if (ImGui.BeginTable("movers", 6, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Entity",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Motion",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Position", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Velocity", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Hit",      ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Facts",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    for (int i = 0; i < entities.size; i++) {
+                        var e = entities.get(i);
+                        var pos = Position.get(e);
+                        var mover = Mover.get(e);
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(Name.of(e) + " " + e);
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(motionName(mover));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted("%d, %d".formatted(pos.x, pos.y));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted("%.1f, %.1f".formatted(mover.xVel, mover.yVel));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted("%+d, %+d".formatted(mover.xHit, mover.yHit));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(facts(mover));
+                    }
+                    ImGui.EndTable();
+                }
+            }
+        };
+    }
+
+    private static String motionName(Mover mover) {
+        if (mover.motion == Motion.NONE) return "NONE";
+        var name = mover.motion.getClass().getSimpleName();
+        return name.isEmpty() ? "lambda" : name;
+    }
+
+    private static String facts(Mover mover) {
+        if (mover.motion instanceof PlatformerMotion p) {
+            return "%s%s%s face %+d".formatted(
+                    p.mode.getClass().getSimpleName(),
+                    p.grounded ? (p.onOneWay ? " on one-way" : " grounded") : " air",
+                    (p.wallDir != 0) ? " wall %+d".formatted(p.wallDir) : "",
+                    p.facing);
+        }
+        if (mover.motion instanceof TopDownMotion t) {
+            return "face %+d, %+d".formatted(t.faceX, t.faceY);
+        }
+        return "";
     }
 
     /** This tick's contact count, the log toggles, and the ENTER / EXIT transition log, newest last. */
