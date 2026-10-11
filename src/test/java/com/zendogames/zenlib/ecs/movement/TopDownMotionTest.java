@@ -98,17 +98,56 @@ public class TopDownMotionTest {
     public void wallsBlockAndReportHits() {
         var world = new ScriptedWorld().solid(120, 0, 10, 200);
         var w = new Walker(world);
-        w.ticks(60, 1, 0);
+        // Start one pixel short at full speed so the first tick's walk is guaranteed to try the
+        // blocked pixel: a walker that lands flush on a sub-pixel boundary is held by wallX before
+        // it ever probes the wall and reports nothing (see pushingIntoAWallNeverMovesOrRampsVelocity)
+        w.pos.x = 111;
+        w.mover.xVel = w.t.tuning.maxSpeed(); // 1.6 px per tick
+        w.mover.xRem = 0.5f;                   // so this tick walks two pixels: 112, then the blocked 113
+        w.ticks(1, 1, 0);
         assertEquals("flush against the wall", 112, w.pos.x);
-        assertTrue("a block zeroes the velocity; control re-accelerates by one tick's worth", w.mover.xVel <= w.t.tuning.accel() * DT + 0.001f);
+        assertEquals(+1, w.mover.xHit);
         assertEquals(+1, world.lastDx);
-        assertTrue(world.blocks > 0);
+        assertEquals(1, world.blocks);
+        assertEquals(+1, w.t.wallX);
+        assertEquals(0,  w.t.wallY);
+
+        w.ticks(1, 1, 0);
+        assertEquals("steering into the adjacent wall holds the axis at rest", 0f, w.mover.xVel, 0f);
+        assertEquals("the held axis never walks, so nothing is reported while pushing", 1, world.blocks);
 
         // Sliding along the wall still works on the other axis
         int y = w.pos.y;
         w.ticks(30, 1, 1);
         assertEquals(112, w.pos.x);
         assertTrue(w.pos.y > y);
+    }
+
+    /** The flicker fix: without the hold, control re-accelerates from zero every tick and an isMoving() check toggles. */
+    @Test
+    public void pushingIntoAWallNeverMovesOrRampsVelocity() {
+        var world = new ScriptedWorld().solid(120, 0, 10, 200).solid(0, 50, 200, 10);
+        var w = new Walker(world);
+        w.ticks(60, 1, 0);
+        assertEquals(112, w.pos.x);
+        for (int i = 0; i < 10; i++) {
+            w.ticks(1, 1, 0);
+            assertEquals("tick " + i, 0f, w.mover.xVel, 0f);
+            assertEquals("tick " + i, 0f, w.mover.xRem, 0f);
+            assertEquals(112, w.pos.x);
+        }
+
+        // Each axis holds independently: down into the floor while still steering right
+        w.ticks(60, 0, -1);
+        assertEquals(60, w.pos.y);
+        assertEquals(-1, w.t.wallY);
+        w.ticks(5, 1, -1);
+        assertEquals(0f, w.mover.xVel, 0f);
+        assertEquals(0f, w.mover.yVel, 0f);
+
+        // Steering away releases at once
+        w.ticks(1, -1, 0);
+        assertTrue(w.mover.xVel < 0);
     }
 
     @Test

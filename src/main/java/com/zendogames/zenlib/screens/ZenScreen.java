@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.tommyettinger.textra.Font;
 import com.github.tommyettinger.textra.Layout;
@@ -19,6 +20,7 @@ import com.zendogames.zenlib.ZenGame;
 import com.zendogames.zenlib.assets.Assets;
 import com.zendogames.zenlib.input.ScreenInputProcessor;
 import com.zendogames.zenlib.render.WorldView;
+import com.zendogames.zenlib.ui.DebugView;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public abstract class ZenScreen implements Screen {
@@ -35,6 +37,7 @@ public abstract class ZenScreen implements Screen {
     public final WorldView worldView;
     public final Stage uiStage;
     public final ScreenInputProcessor inputProcessor;
+    public final Array<DebugView> debugViews;
 
     public InputMultiplexer inputMux;
     public Font font;
@@ -57,6 +60,7 @@ public abstract class ZenScreen implements Screen {
         this.inputMux = new InputMultiplexer();
         this.inputMux.addProcessor(uiStage);
         this.inputMux.addProcessor(inputProcessor);
+        this.debugViews = new Array<>();
     }
 
     /**
@@ -172,7 +176,9 @@ public abstract class ZenScreen implements Screen {
         renderUI();
     }
 
-    public void renderImGui() {}
+    public void renderImGui() {
+        game.debugUI.render(debugViews);
+    }
 
     public void initializeUI() {}
 

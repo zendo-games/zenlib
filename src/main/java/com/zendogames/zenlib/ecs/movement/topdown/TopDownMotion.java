@@ -1,8 +1,12 @@
 package com.zendogames.zenlib.ecs.movement.topdown;
 
+import com.github.tommyettinger.gdcrux.PointI2;
+import com.zendogames.zenlib.collision.Block;
+import com.zendogames.zenlib.collision.shapes.CollisionShape;
 import com.zendogames.zenlib.ecs.components.Mover;
 import com.zendogames.zenlib.ecs.movement.Motion;
 import com.zendogames.zenlib.ecs.movement.MoveIntent;
+import com.zendogames.zenlib.ecs.movement.MoveWorld;
 import com.zendogames.zenlib.utils.Calc;
 
 /**
@@ -21,6 +25,9 @@ public final class TopDownMotion implements Motion {
     /** Cardinal facing: exactly one of the two is non-zero, -1/+1. Starts facing down. */
     public int faceX = 0, faceY = -1;
 
+    /** -1/+1 when a SOLID is one pixel left/right (below/above), else 0; refreshed after every sweep. */
+    public int wallX, wallY;
+
     public TopDownMotion(TopDownTuning tuning) {
         this.tuning = tuning;
     }
@@ -29,6 +36,11 @@ public final class TopDownMotion implements Motion {
     public void control(Mover mover, MoveIntent intent, float dt) {
         int ix = intent.moveX();
         int iy = intent.moveY();
+
+        // Steering into an adjacent wall holds that axis at rest, otherwise velocity ramps between
+        // the ticks that try a pixel and get blocked, and an isMoving() animation check flickers
+        if (ix != 0 && ix == wallX) { ix = 0; mover.xVel = 0; mover.xRem = 0; }
+        if (iy != 0 && iy == wallY) { iy = 0; mover.yVel = 0; mover.yRem = 0; }
 
         // Target velocity: the steered heading at top speed, diagonals scaled to the same speed
         var scale = (ix != 0 && iy != 0) ? DIAGONAL : 1f;
@@ -46,6 +58,15 @@ public final class TopDownMotion implements Motion {
             if (Math.abs(ix) >= Math.abs(iy)) { faceX = ix; faceY = 0;  }
             else                              { faceX = 0;  faceY = iy; }
         }
+    }
+
+    @Override
+    public void after(Mover mover, MoveIntent intent, PointI2 pos, CollisionShape shape, MoveWorld world) {
+        if (shape == null) { wallX = 0; wallY = 0; return; }
+        wallX = (world.probe(shape, pos.x, pos.y, -1,  0) == Block.SOLID) ? -1
+              : (world.probe(shape, pos.x, pos.y, +1,  0) == Block.SOLID) ? +1 : 0;
+        wallY = (world.probe(shape, pos.x, pos.y,  0, -1) == Block.SOLID) ? -1
+              : (world.probe(shape, pos.x, pos.y,  0, +1) == Block.SOLID) ? +1 : 0;
     }
 
     public boolean isFacingHorizontal() { return faceX != 0; }

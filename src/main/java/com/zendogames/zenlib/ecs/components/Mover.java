@@ -29,6 +29,26 @@ public class Mover implements Component {
 
     private static final String TAG = Mover.class.getSimpleName();
 
+    /**
+     * The mover's own reaction to being stopped by something it is {@code blockedBy}: a bullet that
+     * pops, a crate that thuds, an enemy that turns around. Fired by {@code MovementSystem} right
+     * after the step, once per tick per axis whose walk was stopped, with {@code dir} the direction
+     * that was blocked (-1 / +1). Runs inside the system, so a {@code world.despawn(entity)} here is
+     * deferred until the system returns and the entity is still alive for the rest of the callback.
+     * The callback does not say what was hit; an entity that needs that carries {@link Contacts}
+     * and reads {@code blockerX} / {@code blockerY}.
+     * <p>
+     * Versus {@code ContactResponder}: these are for behavior that belongs to one entity and is
+     * authored where it is spawned, like a {@link Timers} action. {@code ContactResponder} is the
+     * screen-wide rule book for <em>pairs</em> (who tints whom, who bumps whom) and the only place
+     * overlaps ({@code detects}) are reported, since the sweep never stops for those. A mover may
+     * use both.
+     */
+    @FunctionalInterface
+    public interface HitCallback {
+        void hit(Entity e, Mover mover, int dir);
+    }
+
     /** Per-entity: a stateful motion must not be shared between movers. {@link Motion#NONE} may be shared. */
     public final Motion motion;
 
@@ -53,6 +73,9 @@ public class Mover implements Component {
 
     /** Events for the tick just stepped: -1/0/+1 when the walk on that axis was stopped, in that direction. Reset at the start of every step. */
     public int xHit, yHit;
+
+    /** Optional per-axis hit reactions; null (the default) does nothing. See {@link HitCallback}. */
+    public HitCallback onHitX, onHitY;
 
     public Mover(Motion motion) {
         this(motion, 0, 0);

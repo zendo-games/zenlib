@@ -92,6 +92,47 @@ public class MovementSystemTest {
     }
 
     @Test
+    public void onHitCallbacksFireOncePerBlockedAxisAndMayDespawn() {
+        var world = new World();
+        var collision = new CollisionWorld(world);
+        world.addSystem(new MovementSystem(collision));
+        wall(world, 30, 0, 10, 100);
+        var mover = new Mover(Motion.NONE, 600f, 0f);
+        var hits = new int[2];
+        var seen = new Entity[1];
+        mover.onHitX = (entity, m, dir) -> {
+            hits[0]++;
+            hits[1] = dir;
+            seen[0] = entity;
+            assertSame(mover, m);
+            world.despawn(entity); // inside a system: deferred until MovementSystem returns
+            assertTrue("still alive inside the callback", entity.isAlive());
+        };
+        mover.onHitY = (entity, m, dir) -> fail("y was never blocked");
+        var e = world.createEntity().add(new Position(10, 10)).add(heroCollider()).add(mover);
+
+        tick(world); // 10 -> 20, open
+        assertEquals(0, hits[0]);
+        tick(world); // 20 -> 22, blocked
+        assertEquals(1, hits[0]);
+        assertEquals(+1, hits[1]);
+        assertSame(e, seen[0]);
+        assertFalse("despawned after the system returned", e.isAlive());
+    }
+
+    @Test
+    public void noCallbackIsFine() {
+        var world = new World();
+        var collision = new CollisionWorld(world);
+        world.addSystem(new MovementSystem(collision));
+        wall(world, 30, 0, 10, 100);
+        var e = world.createEntity().add(new Position(10, 10)).add(heroCollider()).add(new Mover(Motion.NONE, 600f, 0f));
+        tick(world);
+        tick(world);
+        assertEquals(+1, Mover.get(e).xHit);
+    }
+
+    @Test
     public void landingIsReportedAsABlockBelow() {
         var world = new World();
         var collision = new CollisionWorld(world);

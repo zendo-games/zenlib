@@ -53,5 +53,8 @@ public class MovementSystem extends IteratingSystem {
 
         var intent = (input != null) ? MoveIntent.of(input) : MoveIntent.NONE;
         MoveStep.step(mover, position, shape, intent, world, dt);
+
+        if (mover.xHit != 0 && mover.onHitX != null) mover.onHitX.hit(e, mover, mover.xHit);
+        if (mover.yHit != 0 && mover.onHitY != null) mover.onHitY.hit(e, mover, mover.yHit);
     }
 }

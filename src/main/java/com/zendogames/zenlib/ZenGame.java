@@ -25,6 +25,7 @@ import com.zendogames.zenlib.imgui.ImGuiGdx;
 import com.zendogames.zenlib.screens.ZenScreen;
 import com.zendogames.zenlib.screens.transition.ScreenTransition;
 import com.zendogames.zenlib.screens.transition.ScreenTransitionEffect;
+import com.zendogames.zenlib.ui.DebugUI;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 import java.util.Optional;
@@ -41,6 +42,7 @@ public abstract class ZenGame extends ApplicationAdapter {
     public ShapeDrawer shapes;
     public GlyphLayout layout;
     public BitmapFont defaultFont;
+    public DebugUI debugUI;
 
     /** Change with {@link #setScreen}, which is the only place a screen becomes current. */
     protected ZenScreen currentScreen;
@@ -84,6 +86,7 @@ public abstract class ZenGame extends ApplicationAdapter {
         this.shapes = new ShapeDrawer(batch, new TextureRegion(pixel));
         this.layout = new GlyphLayout();
         this.defaultFont = new BitmapFont();
+        this.debugUI = new DebugUI();
 
 //        VisUI.setSkipGdxVersionCheck(true);
 //        VisUI.load(SkinType.ZENDO.get());
