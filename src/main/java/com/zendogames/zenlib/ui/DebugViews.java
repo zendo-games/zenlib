@@ -2,12 +2,11 @@ package com.zendogames.zenlib.ui;
 
 import com.github.xpenatan.jparser.runtime.helper.NativeBoolArray;
 import com.zendogames.zenlib.FramePool;
+import com.zendogames.zenlib.Log;
+import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.ecs.Family;
 import com.zendogames.zenlib.ecs.World;
-import com.zendogames.zenlib.ecs.components.Mover;
-import com.zendogames.zenlib.ecs.components.Name;
-import com.zendogames.zenlib.ecs.components.Position;
-import com.zendogames.zenlib.ecs.components.Timers;
+import com.zendogames.zenlib.ecs.components.*;
 import com.zendogames.zenlib.ecs.movement.Motion;
 import com.zendogames.zenlib.ecs.movement.platformer.PlatformerMotion;
 import com.zendogames.zenlib.ecs.movement.topdown.TopDownMotion;
@@ -15,6 +14,8 @@ import com.zendogames.zenlib.ecs.systems.ContactSystem;
 import imgui.ImGui;
 import imgui.enums.ImGuiTableColumnFlags;
 import imgui.enums.ImGuiTableFlags;
+
+import java.util.ArrayDeque;
 
 /**
  * {@link DebugView}s over library objects. Each factory captures what it reads and is created once
@@ -213,6 +214,65 @@ public final class DebugViews {
                     }
                 }
                 ImGui.EndChild();
+            }
+        };
+    }
+
+    /** Transitions kept per machine while its Trace box is ticked in {@link #behaviors}. */
+    private static final int HISTORY_CAPACITY = 32;
+
+    /**
+     * Every {@code Behavior} in the world: current state, time in it, previous and pending state.
+     * Ticking a row's Trace box makes that machine keep its last transitions and refusals, listed
+     * under the table (newest last) until the box is cleared.
+     */
+    public static DebugView behaviors(World world) {
+        var family = world.family(Family.all(Behavior.TYPE));
+        return new DebugView() {
+            @Override public String title() { return "Behaviors"; }
+            @Override public void draw() {
+                var entities = family.entities();
+                ImGui.TextUnformatted("behaviors: " + entities.size);
+
+                if (ImGui.BeginTable("behaviors", 6, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Entity",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("State",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("For",      ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Previous", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Pending",  ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Trace",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    for (int i = 0; i < entities.size; i++) {
+                        var e = entities.get(i);
+                        var m = Behavior.get(e).machine;
+                        ImGui.PushID(i);
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(Name.of(e) + " " + e);
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(m.current()));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(m.isStarted() ? "%.2fs (%d)".formatted(m.seconds(), m.ticks()) : "not started");
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(m.previous() == null ? "" : String.valueOf(m.previous()));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(m.pending()  == null ? "" : String.valueOf(m.pending()));
+                        ImGui.TableNextColumn();
+                        Buffers.checkbox.setValue(0, m.isRecording());
+                        if (ImGui.Checkbox("##trace", Buffers.checkbox)) {
+                            m.record(Buffers.checkbox.getValue(0) ? HISTORY_CAPACITY : 0);
+                        }
+                        ImGui.PopID();
+                    }
+                    ImGui.EndTable();
+                }
+
+                for (int i = 0; i < entities.size; i++) {
+                    var e = entities.get(i);
+                    var m = Behavior.get(e).machine;
+                    if (!m.isRecording()) continue;
+                    if (ImGui.TreeNode(Name.of(e) + " " + e)) {
+                        for (var line : m.history) {
+                            ImGui.TextUnformatted(line);
+                        }
+                        ImGui.TreePop();
+                    }
+                }
             }
         };
     }

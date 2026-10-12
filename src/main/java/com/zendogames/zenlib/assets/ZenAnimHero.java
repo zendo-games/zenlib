@@ -6,9 +6,9 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public enum ZenAnimHero implements AnimType {
       ATTACK ("characters/hero/hero-attack/hero-attack")
-    , DEATH  ("characters/hero/hero-death/hero-death")
+    , DEATH  ("characters/hero/hero-death/hero-death", DEFAULT_FRAME_DURATION, PlayMode.NORMAL)
     , FALL   ("characters/hero/hero-fall/hero-fall")
-    , HURT   ("characters/hero/hero-hurt/hero-hurt")
+    , HURT   ("characters/hero/hero-hurt/hero-hurt", DEFAULT_FRAME_DURATION, PlayMode.NORMAL)
     , IDLE   ("characters/hero/hero-idle/hero-idle")
     , JUMP   ("characters/hero/hero-jump/hero-jump")
     , RUN    ("characters/hero/hero-run/hero-run")
