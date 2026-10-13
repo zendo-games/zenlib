@@ -199,3 +199,6 @@ Started from [tommyettinger/libgdx-library-template](https://github.com/tommyett
 ## License
 
 [Apache License 2.0](LICENSE)
+
+Bundled fonts are under the SIL Open Font License 1.1, see
+`src/main/resources/com/zendogames/zenlib/assets/fonts/LICENSE-OFL.txt`.

@@ -6,12 +6,12 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.github.tommyettinger.textra.Font;
 
-public interface FontType extends AssetType<Font>{
+public interface FontType extends AssetType<Font> {
 
     FileHandle file();
     FreeTypeFontParameter params();
 
-    /** Name this font gets inside a {@code SkinType} that lists it, eg. {@code "cousine"}. */
+    /** Name this font gets inside a {@code SkinType} that lists it, eg. {@code "jetbrainsmono-regular"}. */
     default String skinName() { return name().toLowerCase(); }
 
     @Override

@@ -60,10 +60,8 @@ public class ImGuiGdx {
         imgui = new ImGuiGdxGLImpl();
         input = new ImGuiGdxInputMultiplexer(new KeyboardGatedInput());
 
-        var font1 = Gdx.files.classpath(folder + "cousine-regular.ttf");
-        var font2 = Gdx.files.classpath(folder + "droid-sans-mono.ttf");
-        addFont(font1, font1.name());
-        addFont(font2, font2.name());
+        var font = Gdx.files.classpath(folder + "JetBrainsMono-Regular.ttf");
+        addFont(font, font.name());
 
         initialized = true;
         Log.info("ImGui", "initialized in %.3f seconds", (System.currentTimeMillis() - start) / 1_000.0);

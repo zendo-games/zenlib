@@ -18,6 +18,7 @@ import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.Zen;
 import com.zendogames.zenlib.ZenGame;
 import com.zendogames.zenlib.assets.Assets;
+import com.zendogames.zenlib.assets.ZenFont;
 import com.zendogames.zenlib.input.ScreenInputProcessor;
 import com.zendogames.zenlib.render.WorldView;
 import com.zendogames.zenlib.ui.DebugView;
@@ -61,6 +62,8 @@ public abstract class ZenScreen implements Screen {
         this.inputMux.addProcessor(uiStage);
         this.inputMux.addProcessor(inputProcessor);
         this.debugViews = new Array<>();
+        this.font = ZenFont.JETBRAINS_MONO_32.get();
+        this.layout = new Layout(font);
     }
 
     /**

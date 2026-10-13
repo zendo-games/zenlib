@@ -58,6 +58,7 @@ public class Assets implements Disposable {
 
         // Library assets first: a category may use anything registered before it (eg. icons use an atlas)
         register(ZenAtlas.values());
+        register(ZenFont.values());
         register(ZenAnimHero.values());
     }
 
