@@ -103,6 +103,7 @@ public final class PlatformerMotion implements Motion {
     @Override
     public void after(Mover mover, MoveIntent intent, PointI2 pos, CollisionShape shape, MoveWorld world) {
         settle(mover, pos, shape, world);
+        reportPush(mover, intent, pos, shape, world);
         mode = mode.after(this, mover, intent, pos, shape, world);
     }
 
@@ -134,6 +135,22 @@ public final class PlatformerMotion implements Motion {
         // Wall facts last: every probe overwrites the world's last contact
         wallDir = (world.probe(shape, pos.x, pos.y, -1, 0) == Block.SOLID) ? -1
                 : (world.probe(shape, pos.x, pos.y, +1, 0) == Block.SOLID) ? +1 : 0;
+    }
+
+    /**
+     * Pushing into an adjacent wall counts as being blocked by it. The sweep only reports a block
+     * when it tries a pixel, and the control half holds a pusher at rest, so a mover that arrived
+     * flush would otherwise report nothing while pressing against the wall: no {@code xHit}, no
+     * {@code onHitX}, no BLOCKED contact. The landing report in {@link #settle} is the same rule
+     * for the floor. The re-probe leaves the blocker as the world's last contact for {@code onBlocked}.
+     */
+    private void reportPush(Mover mover, MoveIntent intent, PointI2 pos, CollisionShape shape, MoveWorld world) {
+        if (wallDir == 0 || intent.moveX() != wallDir || mover.xHit != 0) return;
+        if (world.probe(shape, pos.x, pos.y, wallDir, 0) != Block.SOLID) return;
+        mover.xHit = wallDir;
+        mover.xVel = 0; // a block stops the axis, as the sweep's does
+        mover.xRem = 0;
+        world.onBlocked(wallDir, 0); // must directly follow the probe: reads the world's last contact
     }
 
     // ------------------------------------------------------------------------
