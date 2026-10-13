@@ -11,6 +11,7 @@ import com.zendogames.zenlib.ZenFlag;
 import imgui.*;
 import imgui.enums.ImGuiConfigFlags;
 import imgui.gdx.ImGuiGdxGLImpl;
+import imgui.gdx.ImGuiGdxInput;
 import imgui.gdx.ImGuiGdxInputMultiplexer;
 
 public class ImGuiGdx {
@@ -57,7 +58,7 @@ public class ImGuiGdx {
         io.set_ConfigFlags(ImGuiConfigFlags.DockingEnable);
 
         imgui = new ImGuiGdxGLImpl();
-        input = new ImGuiGdxInputMultiplexer();
+        input = new ImGuiGdxInputMultiplexer(new KeyboardGatedInput());
 
         var font1 = Gdx.files.classpath(folder + "cousine-regular.ttf");
         var font2 = Gdx.files.classpath(folder + "droid-sans-mono.ttf");
@@ -80,6 +81,12 @@ public class ImGuiGdx {
     /** True while an imgui widget has keyboard focus, so game key bindings should not fire. */
     public static boolean wantsKeyboard() {
         return initialized && ImGui.GetIO().get_WantCaptureKeyboard();
+    }
+
+    private static final class KeyboardGatedInput extends ImGuiGdxInput {
+        @Override public boolean keyDown(int keycode)     { super.keyDown(keycode);    return wantsKeyboard(); }
+        @Override public boolean keyUp(int keycode)       { super.keyUp(keycode);      return false; }
+        @Override public boolean keyTyped(char character) { super.keyTyped(character); return wantsKeyboard(); }
     }
 
     public static InputProcessor input() {

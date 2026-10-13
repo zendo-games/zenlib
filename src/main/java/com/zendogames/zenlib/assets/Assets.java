@@ -5,12 +5,14 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
+import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.TimeUtils;
 import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.ZenFlag;
+import com.zendogames.zenlib.tilemap.ZenTmxMapLoader;
 
 /**
  * Owns the {@link AssetManager} and runs the two phases over every registered {@link AssetType}:
@@ -47,6 +49,7 @@ public class Assets implements Disposable {
     public Assets() {
         this.mgr = new AssetManager(FILE_HANDLE_RESOLVER);
         this.mgr.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(mgr.getFileHandleResolver()));
+        this.mgr.setLoader(TiledMap.class, new ZenTmxMapLoader(mgr.getFileHandleResolver()));
         this.disposables = new Array<>();
         this.types = new Array<>();
         this.loadStartMillis = TimeUtils.millis();

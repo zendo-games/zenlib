@@ -6,10 +6,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.ecs.*;
-import com.zendogames.zenlib.ecs.components.Animator;
-import com.zendogames.zenlib.ecs.components.Image;
-import com.zendogames.zenlib.ecs.components.Position;
-import com.zendogames.zenlib.ecs.components.Renderable;
+import com.zendogames.zenlib.ecs.components.*;
 import com.zendogames.zenlib.render.RenderLayer;
 import com.zendogames.zenlib.render.Visual;
 
@@ -20,8 +17,8 @@ import com.zendogames.zenlib.render.Visual;
  * {@code batch.begin()} and {@code end()}, with the projection already set to the world camera.
  * Positions are interpolated with {@code World.alpha()} while {@code ZenFlag.RENDER_INTERP} is on.
  * <p>
- * The library's {@link Image} and {@link Animator} are always drawn; a game passes the types of
- * its own {@code Renderable} subclasses to the constructor.
+ * The library's {@link Image}, {@link Animator}, and {@link TileLayer} are always drawn;
+ * a game passes the types of its own {@code Renderable} subclasses to the constructor.
  */
 public class RenderSystem extends EntitySystem {
 
@@ -40,6 +37,7 @@ public class RenderSystem extends EntitySystem {
         this.types = new Array<>();
         this.types.add(Image.TYPE);
         this.types.add(Animator.TYPE);
+        this.types.add(TileLayer.TYPE);
         for (var type : gameTypes) {
             this.types.add(type);
         }

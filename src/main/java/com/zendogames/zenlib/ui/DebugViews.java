@@ -277,6 +277,54 @@ public final class DebugViews {
         };
     }
 
+    /** Every map in the world: size and counts, then one row per tile layer with a live visibility toggle (collision layers start hidden). */
+    public static DebugView tilemaps(World world) {
+        var family = world.family(Family.all(Tilemap.TYPE));
+        return new DebugView() {
+            @Override public String title() { return "Tilemaps"; }
+            @Override public void draw() {
+                var entities = family.entities();
+                if (entities.size == 0) ImGui.TextUnformatted("no tilemaps");
+                for (int i = 0; i < entities.size; i++) {
+                    var entity = entities.get(i);
+                    var tilemap = Tilemap.get(entity);
+                    ImGui.PushID(i);
+                    ImGui.TextUnformatted("%s %s: %dx%d tiles of %d px, %d layers (%d collision), %d objects".formatted(
+                            Name.of(entity), entity, tilemap.cols, tilemap.rows, tilemap.tileSize, tilemap.layers.size, tilemap.collisionLayers.size, tilemap.objects.size));
+
+                    if (ImGui.BeginTable("layers", 5, TableFlags.TABLE)) {
+                        ImGui.TableSetupColumn("Layer",   ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableSetupColumn("Render",  ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableSetupColumn("Order",   ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableSetupColumn("Kind",    ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableSetupColumn("Visible", ImGuiTableColumnFlags.WidthStretch);
+                        ImGui.TableHeadersRow();
+                        var layers = tilemap.layerEntities;
+                        for (int j = 0; j < layers.size; j++) {
+                            var layerEntity = layers.get(j);
+                            if (!layerEntity.isAlive()) continue;
+                            var tileLayer = TileLayer.get(layerEntity);
+                            ImGui.PushID(j);
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted(tileLayer.name() + " " + layerEntity);
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted(tileLayer.layer.layerName());
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(tileLayer.order));
+                            ImGui.TableNextColumn(); ImGui.TextUnformatted(tileLayer.collision ? "collision" : "tiles");
+                            ImGui.TableNextColumn();
+                            Buffers.checkbox.setValue(0, tileLayer.visible);
+                            if (ImGui.Checkbox("##visible", Buffers.checkbox)) {
+                                tileLayer.visible = Buffers.checkbox.getValue(0);
+                            }
+                            ImGui.PopID();
+                        }
+                        ImGui.EndTable();
+                    }
+                    ImGui.PopID();
+                }
+            }
+        };
+    }
+
     /**
      * Native buffers allocated on first use by this holder class: a {@code NativeBoolArray} created
      * before {@code ImGuiGdx.load()} crashes. One checkbox buffer is reused per table row; PushID
