@@ -69,6 +69,7 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
             case NUM_5 -> ZenFlag.SHOW_IMGUI.toggle();
             case NUM_6 -> ZenFlag.RENDER_FBO.toggle();
             case NUM_0 -> ZenFlag.FRAME_STEP.toggle();
+            case GRAVE -> screen.game.debugUI.toggleCollapsed();
             default -> { return false; }
         }
         return true;

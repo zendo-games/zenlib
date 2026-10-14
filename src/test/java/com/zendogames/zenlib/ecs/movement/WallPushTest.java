@@ -11,7 +11,6 @@ import com.zendogames.zenlib.ecs.movement.platformer.PlatformerTuning;
 import com.zendogames.zenlib.ecs.systems.ContactSystem;
 import com.zendogames.zenlib.ecs.systems.MovementSystem;
 import com.zendogames.zenlib.sim.SimulationStep;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -22,13 +21,9 @@ import static org.junit.Assert.*;
  * pusher at rest, so a mover that arrives exactly flush (one approach in three at 3.2 px/tick,
  * every approach that ends with a 1 px step) reports nothing while pressing on: no {@code xHit},
  * no {@code Contacts.blocked}, no BLOCKED contact. That is why the demo's hero-hero bump fires
- * for some approaches and never for others (2026-10-13).
- * <p>
- * Ignored until {@code PlatformerMotion.after} reports the push (the {@code reportPush} step
- * proposed 2026-10-13); remove the {@code @Ignore} when it lands, or delete this class if the
- * decision goes the other way.
+ * for some approaches and never for others (2026-10-13). Fixed the same day by the
+ * {@code reportPush} step in {@code PlatformerMotion.after}, which these tests pin.
  */
-@Ignore("red until PlatformerMotion reports pushing into an adjacent wall as a block (proposed 2026-10-13)")
 public class WallPushTest {
 
     enum Mask implements CollisionMask {

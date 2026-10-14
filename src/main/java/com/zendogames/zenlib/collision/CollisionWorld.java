@@ -1,6 +1,7 @@
 package com.zendogames.zenlib.collision;
 
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.github.tommyettinger.gdcrux.PointI2;
 import com.zendogames.zenlib.FramePool;
 import com.zendogames.zenlib.collision.shapes.CollisionAASeg;
@@ -25,6 +26,8 @@ import com.zendogames.zenlib.ecs.components.Position;
  * }</pre>
  */
 public class CollisionWorld {
+
+    private static final String TAG = CollisionWorld.class.getSimpleName();
 
     private final Family family;
 
@@ -143,6 +146,60 @@ public class CollisionWorld {
         var col = Collider.get(mover);
         all(col.shape(), pos.x, pos.y, 0, 0, col.detects(), mover, out);
     }
+
+    // ------------------------------------------------------------------------
+    // Raycasting
+    // ------------------------------------------------------------------------
+
+    /**
+     * Nearest entity whose mask is in {@code masks} along the ray from {@code (ox, oy)} in the direction
+     * {@code (dirX, dirY)} (normalized here), within {@code range} pixels, skipping {@code excluded}.
+     * Fills {@code out} and returns true on a hit. Edges count as hits; an origin inside a shape hits at
+     * distance zero; a one-way segment is hit from either side and reported as ONE_WAY (perception sees
+     * the platform, the mover's one-way rule stays in {@link #probe}). Every candidate is tested, no broadphase.
+     */
+    public boolean raycast(float ox, float oy, float dirX, float dirY, float range, int masks, Entity excluded, RayHit out) {
+        var length = (float) Math.sqrt(dirX * dirX + dirY * dirY);
+        if (length == 0f) throw new GdxRuntimeException(TAG + ": raycast needs a direction");
+
+        dirX /= length;
+        dirY /= length;
+        out.clear(range, ox + dirX * range, oy + dirY * range);
+        if (masks == 0 || range <= 0f) return false;
+
+        var best = range;
+        var bestBlock = Block.NONE;
+        var bestEntity = (Entity) null;
+
+        var entities = family.entities();
+        for (int i = 0; i < entities.size; i++) {
+            var other = entities.get(i);
+            if (other == excluded) continue;
+
+            var otherCol = Collider.get(other);
+            if (!otherCol.mask().in(masks)) continue;
+
+            // Only as far as the best hit so far: a farther shape cannot win
+            var dist = otherCol.shape().raycast(ox, oy, dirX, dirY, best, Position.get(other));
+            if (dist < 0f) continue;
+
+            var block = (otherCol.shape() instanceof CollisionAASeg) ? Block.ONE_WAY : Block.SOLID;
+            var tie = (dist == best) && (block == Block.SOLID) && (bestBlock == Block.ONE_WAY); // SOLID wins a tie, as in probe
+            if (bestEntity == null || dist < best || tie) {
+                best = dist;
+                bestBlock = block;
+                bestEntity = other;
+            }
+        }
+        if (bestEntity == null) return false;
+
+        out.hit(best, ox + dirX * best, oy + dirY * best, bestEntity, bestBlock);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------------
 
     private static boolean hits(Entity other, Entity excluded, CollisionShape shape, PointI2 pos, PointI2 offset, int masks) {
         if (other == excluded) return false;

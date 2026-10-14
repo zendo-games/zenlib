@@ -24,12 +24,14 @@ public sealed interface CollisionShape permits CollisionCaps, CollisionRect, Col
     float top(PointI2 position);
     float bottom(PointI2 position);
 
-
     /** The local-space gdx shape; subtract the entity position before a {@code contains} test. */
     Shape2D shape2d();
 
     /** True when this shape, moved from {@code thisPos} by {@code offset}, overlaps {@code that} at {@code thatPos}. */
     boolean overlaps(CollisionShape that, PointI2 thisPos, PointI2 thatPos, PointI2 offset);
+
+    /** Distance along the unit ray at which it first enters this shape placed at {@code pos}, or {@code -1} for a miss within {@code range}. */
+    float raycast(float ox, float oy, float dirX, float dirY, float range, PointI2 pos);
 
     default float centerX(PointI2 position) { return (left(position) + right(position)) * 0.5f; }
     default float centerY(PointI2 position) { return (bottom(position) + top(position)) * 0.5f; }

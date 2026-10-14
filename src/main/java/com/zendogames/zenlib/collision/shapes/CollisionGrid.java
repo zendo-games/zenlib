@@ -125,6 +125,67 @@ public record CollisionGrid(
         throw new GdxRuntimeException(TAG + ": a grid is never a mover, test the other shape against the grid instead");
     }
 
+    /**
+     * Cell walk (DDA) from where the ray enters the grid: a {@link CellShape#FULL} cell is hit where
+     * the ray enters it, a ramp cell at its entry point when that lies in the solid half, else where
+     * the ray crosses the hypotenuse inside the cell; EMPTY cells are stepped over. Edges count, so a
+     * ray grazing a solid cell's corner reports it. Stops at {@code range} or on leaving the grid.
+     */
+    @Override
+    public float raycast(float ox, float oy, float dirX, float dirY, float range, PointI2 pos) {
+        float t = CollisionRect.raycastBox(ox, oy, dirX, dirY, range, left(pos), bottom(pos), right(pos), top(pos));
+        if (t < 0f) return -1f;
+
+        // The cell holding the entry point; clamped, since a ray entering across the far edge lands exactly on it
+        int cx = MathUtils.clamp(MathUtils.floor((ox + dirX * t - pos.x) / cellSize), 0, cols - 1);
+        int cy = MathUtils.clamp(MathUtils.floor((oy + dirY * t - pos.y) / cellSize), 0, rows - 1);
+
+        // Per axis: which way the walk steps, the distance between boundaries, and the distance to the next one
+        int   stepX  = (dirX > 0f) ? 1 : (dirX < 0f) ? -1 : 0;
+        int   stepY  = (dirY > 0f) ? 1 : (dirY < 0f) ? -1 : 0;
+        float deltaX = (stepX == 0) ? Float.POSITIVE_INFINITY : cellSize / Math.abs(dirX);
+        float deltaY = (stepY == 0) ? Float.POSITIVE_INFINITY : cellSize / Math.abs(dirY);
+        float nextX  = (stepX == 0) ? Float.POSITIVE_INFINITY : (pos.x + (cx + Math.max(stepX, 0)) * cellSize - ox) / dirX;
+        float nextY  = (stepY == 0) ? Float.POSITIVE_INFINITY : (pos.y + (cy + Math.max(stepY, 0)) * cellSize - oy) / dirY;
+
+        while (inBounds(cx, cy) && t <= range) {
+            var shape = cells[cx + cy * cols];
+            if (shape == CellShape.FULL) return t;
+            if (shape != CellShape.EMPTY) {
+                float exit = Math.min(nextX, nextY);
+                float ex   = ox + dirX * t - (pos.x + cx * cellSize);
+                float ey   = oy + dirY * t - (pos.y + cy * cellSize);
+                float hit  = raycastRamp(shape, ex, ey, dirX, dirY, exit - t);
+                if (hit >= 0f && t + hit <= range) return t + hit;
+            }
+            if (nextX < nextY) { t = nextX; nextX += deltaX; cx += stepX; }
+            else               { t = nextY; nextY += deltaY; cy += stepY; }
+        }
+        return -1f;
+    }
+
+    /**
+     * Unit ray from cell-local {@code (ex, ey)}, a point on the cell's boundary or inside it, against
+     * a ramp's solid triangle within {@code span} (the distance to where the ray leaves the cell):
+     * {@code 0} when the start is already in the solid half (its hypotenuse included), else the
+     * crossing of the hypotenuse, or {@code -1}.
+     */
+    public float raycastRamp(CellShape shape, float ex, float ey, float dirX, float dirY, float span) {
+        // Signed distance to the hypotenuse, positive on the solid side, and its rate of change along the ray
+        float f, df;
+        switch (shape) {
+            case RAMP_NE -> { f = ex - ey;            df = dirX - dirY; }   // solid where x >= y
+            case RAMP_NW -> { f = cellSize - ex - ey; df = -dirX - dirY; }  // solid where x + y <= size
+            case RAMP_SE -> { f = ex + ey - cellSize; df = dirX + dirY; }   // solid where x + y >= size
+            case RAMP_SW -> { f = ey - ex;            df = dirY - dirX; }   // solid where y >= x
+            default -> throw new GdxRuntimeException(TAG + ": " + shape + " is not a ramp");
+        }
+        if (f >= 0f) return 0f;             // starts in the solid half
+        if (df <= 0f) return -1f;           // parallel to the hypotenuse or moving away from it
+        float u = -f / df;                  // f + u * df == 0
+        return (u <= span) ? u : -1f;
+    }
+
     /** (pooled) The whole grid's bounds at the entity's world position. */
     public Rectangle bounds(PointI2 position) {
         return FramePool.rect(position.x, position.y, cols * cellSize, rows * cellSize);

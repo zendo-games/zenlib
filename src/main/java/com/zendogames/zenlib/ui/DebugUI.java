@@ -20,6 +20,14 @@ public class DebugUI {
     private final Array<DebugView> pinned = new Array<>();
     private final DebugView framePool = DebugViews.framePool();
 
+    /** What {@code Begin} reported last frame, and whether {@link #toggleCollapsed} asked to flip it. */
+    private boolean collapsed, toggleRequested;
+
+    /** Collapses or expands the window on the next frame; {@code ScreenInputProcessor.debugKey} binds it to the tilde key. */
+    public void toggleCollapsed() {
+        toggleRequested = true;
+    }
+
     /** Views drawn on every screen, in order, before the screen's own. */
     public DebugUI always(DebugView... views) {
         pinned.addAll(views);
@@ -31,7 +39,12 @@ public class DebugUI {
         ImGui.SetNextWindowCollapsed(true, ImGuiCond.Once);
         ImGui.SetNextWindowPos(ImTemp.ImVec2_1(0, 0), ImGuiCond.Once);
         ImGui.SetNextWindowSize(ImTemp.ImVec2_1(Gdx.graphics.getWidth(), 0), ImGuiCond.Once);
+        if (toggleRequested) {
+            ImGui.SetNextWindowCollapsed(!collapsed, ImGuiCond.Always); // overrides the Once above for this frame
+            toggleRequested = false;
+        }
         ImGui.Begin("Debug");
+        collapsed = ImGui.IsWindowCollapsed();
         {
             tools();
             for (int i = 0; i < pinned.size; i++) section(pinned.get(i));

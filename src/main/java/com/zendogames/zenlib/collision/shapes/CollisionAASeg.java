@@ -101,6 +101,34 @@ public record CollisionAASeg(
         };
     }
 
+    /**
+     * Where the ray crosses the segment's line within {@code [start, end]}, from either side: the
+     * one-way rule is the mover's, perception sees the platform. A ray along the line hits the nearer
+     * endpoint ahead of it, or at {@code 0} when it starts on the segment.
+     */
+    @Override
+    public float raycast(float ox, float oy, float dirX, float dirY, float range, PointI2 pos) {
+        float line = worldCoord(pos);
+        float s0   = worldStart(pos);
+        float s1   = worldEnd(pos);
+        // 'along' is the axis the segment runs on, 'across' the other
+        float oAlong  = isHorizontal() ? ox   : oy;
+        float oAcross = isHorizontal() ? oy   : ox;
+        float dAlong  = isHorizontal() ? dirX : dirY;
+        float dAcross = isHorizontal() ? dirY : dirX;
+
+        if (dAcross == 0f) {
+            if (oAcross != line) return -1f;                                   // parallel, off the line
+            if (oAlong >= s0 && oAlong <= s1) return 0f;                       // on the segment
+            float t = ((dAlong > 0f) ? s0 - oAlong : s1 - oAlong) / dAlong;    // toward the nearer endpoint
+            return (t >= 0f && t <= range) ? t : -1f;
+        }
+        float t = (line - oAcross) / dAcross;
+        if (t < 0f || t > range) return -1f;
+        float along = oAlong + t * dAlong;
+        return (along >= s0 && along <= s1) ? t : -1f;
+    }
+
     // ------------------------------------------------------------------------
     // Static overlap helpers: the other shape is already in world coords at its candidate position
     // ------------------------------------------------------------------------

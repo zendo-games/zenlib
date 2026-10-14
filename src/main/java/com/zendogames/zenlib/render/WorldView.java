@@ -116,8 +116,9 @@ public class WorldView implements Disposable {
         buffer.begin();
         {
             // One world unit per texel: the camera sees exactly the buffer, not the fractional viewport size
-            camera.viewportWidth  = buffer.getWidth();
-            camera.viewportHeight = buffer.getHeight();
+            // (the buffer grows with the camera's zoom, so a zoomed out view keeps its resolution)
+            camera.viewportWidth  = buffer.getWidth()  / camera.zoom;
+            camera.viewportHeight = buffer.getHeight() / camera.zoom;
             camera.update();
 
             ScreenUtils.clear(clearColor);
@@ -157,8 +158,8 @@ public class WorldView implements Disposable {
 
     /** Creates the buffer on first use and again whenever the world size changes (Extend changes it on resize). */
     private void ensureBuffer() {
-        var width  = Math.max(1, MathUtils.round(worldWidth()));
-        var height = Math.max(1, MathUtils.round(worldHeight()));
+        var width  = Math.max(1, MathUtils.round(worldWidth()  * camera.zoom));
+        var height = Math.max(1, MathUtils.round(worldHeight() * camera.zoom));
         if (buffer != null && buffer.getWidth() == width && buffer.getHeight() == height) return;
 
         if (buffer != null) buffer.dispose();

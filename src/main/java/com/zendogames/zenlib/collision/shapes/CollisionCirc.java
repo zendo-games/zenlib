@@ -60,6 +60,32 @@ public record CollisionCirc(Circle circle) implements CollisionShape {
         };
     }
 
+    @Override
+    public float raycast(float ox, float oy, float dirX, float dirY, float range, PointI2 pos) {
+        return raycastCircle(ox, oy, dirX, dirY, range, pos.x + circle.x, pos.y + circle.y, circle.radius);
+    }
+
+    /**
+     * Unit ray against a circle: the nearer root of the quadratic (with {@code |dir| = 1} the leading
+     * coefficient is one), {@code 0} from inside or on the circle, {@code -1} for a miss within
+     * {@code range}. Shared by the capsule's caps.
+     */
+    public static float raycastCircle(float ox, float oy, float dirX, float dirY, float range, float cx, float cy, float radius) {
+        float fx = ox - cx;
+        float fy = oy - cy;
+        float c = fx * fx + fy * fy - radius * radius;
+        if (c <= 0f) return 0f;                       // origin inside or on the circle
+
+        float b = fx * dirX + fy * dirY;              // half the linear term
+        if (b > 0f) return -1f;                       // the circle is behind the origin
+
+        float disc = b * b - c;
+        if (disc < 0f) return -1f;                    // passes beside it
+
+        float t = -b - (float) Math.sqrt(disc);
+        return (t <= range) ? t : -1f;
+    }
+
     // ------------------------------------------------------------------------
     // Static overlap helpers: 'thisCirc' is already in world coords at its candidate position
     // ------------------------------------------------------------------------

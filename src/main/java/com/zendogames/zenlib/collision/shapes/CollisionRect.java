@@ -57,6 +57,43 @@ public record CollisionRect(Rectangle rectangle) implements CollisionShape {
         };
     }
 
+    @Override
+    public float raycast(float ox, float oy, float dirX, float dirY, float range, PointI2 pos) {
+        return raycastBox(ox, oy, dirX, dirY, range, left(pos), bottom(pos), right(pos), top(pos));
+    }
+
+    /**
+     * Slab test of a unit ray against an axis-aligned box, edges inclusive: the distance at which the
+     * ray enters the box, {@code 0} when the origin is inside, {@code -1} for a miss within {@code range}.
+     * Shared by the capsule's inner rect and the grid's bounds.
+     */
+    public static float raycastBox(float ox, float oy, float dirX, float dirY, float range,
+                                   float left, float bottom, float right, float top) {
+        float tMin = 0f;
+        float tMax = range;
+        if (dirX == 0f) {
+            if (ox < left || ox > right) return -1f;
+        } else {
+            float inv = 1f / dirX;
+            float t0 = (left  - ox) * inv;
+            float t1 = (right - ox) * inv;
+            if (t0 > t1) { float tmp = t0; t0 = t1; t1 = tmp; }
+            tMin = Math.max(tMin, t0);
+            tMax = Math.min(tMax, t1);
+        }
+        if (dirY == 0f) {
+            if (oy < bottom || oy > top) return -1f;
+        } else {
+            float inv = 1f / dirY;
+            float t0 = (bottom - oy) * inv;
+            float t1 = (top    - oy) * inv;
+            if (t0 > t1) { float tmp = t0; t0 = t1; t1 = tmp; }
+            tMin = Math.max(tMin, t0);
+            tMax = Math.min(tMax, t1);
+        }
+        return (tMin <= tMax) ? tMin : -1f;
+    }
+
     // ------------------------------------------------------------------------
     // Static overlap helpers: 'thisRect' is already in world coords at its candidate position
     // ------------------------------------------------------------------------

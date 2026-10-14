@@ -122,6 +122,35 @@ public record CollisionCaps(Axis axis, Rectangle bounds) implements CollisionSha
         };
     }
 
+    /** The nearer of the inner rect and the two cap circles, after a cheap reject on the outer bounds. */
+    @Override
+    public float raycast(float ox, float oy, float dirX, float dirY, float range, PointI2 pos) {
+        float left = left(pos), bottom = bottom(pos), right = right(pos), top = top(pos);
+        if (CollisionRect.raycastBox(ox, oy, dirX, dirY, range, left, bottom, right, top) < 0f) return -1f;
+
+        float r = radius();
+        boolean vertical = (axis == Axis.VERTICAL);
+        float innerLeft   = vertical ? left       : left + r;
+        float innerRight  = vertical ? right      : right - r;
+        float innerBottom = vertical ? bottom + r : bottom;
+        float innerTop    = vertical ? top - r    : top;
+        float ax = left + r,                   ay = bottom + r;   // bottom / left cap, one radius in from the bottom-left corner
+        float bx = vertical ? left + r : right - r;
+        float by = vertical ? top - r  : bottom + r;              // top / right cap
+
+        float t = CollisionRect.raycastBox(ox, oy, dirX, dirY, range, innerLeft, innerBottom, innerRight, innerTop);
+        t = nearest(t, CollisionCirc.raycastCircle(ox, oy, dirX, dirY, range, ax, ay, r));
+        t = nearest(t, CollisionCirc.raycastCircle(ox, oy, dirX, dirY, range, bx, by, r));
+        return t;
+    }
+
+    /** The smaller of two ray distances, where {@code -1} is a miss. */
+    static float nearest(float a, float b) {
+        if (a < 0f) return b;
+        if (b < 0f) return a;
+        return Math.min(a, b);
+    }
+
     // ------------------------------------------------------------------------
     // Static overlap helpers, also called from the other shapes' reverse arms.
     // The capsule is at 'capsPos'; the other shape is already in world coords.
