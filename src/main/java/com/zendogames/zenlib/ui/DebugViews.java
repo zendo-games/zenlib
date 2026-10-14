@@ -290,13 +290,14 @@ public final class DebugViews {
                 var entities = family.entities();
                 ImGui.TextUnformatted("sensors: " + entities.size);
 
-                if (ImGui.BeginTable("sensors", 6, TableFlags.TABLE)) {
+                if (ImGui.BeginTable("sensors", 7, TableFlags.TABLE)) {
                     ImGui.TableSetupColumn("Entity",   ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("Whiskers", ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("Range",    ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("Facing",   ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("Terrain",  ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableSetupColumn("Threat",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Sight",    ImGuiTableColumnFlags.WidthStretch);
                     ImGui.TableHeadersRow();
                     for (int i = 0; i < entities.size; i++) {
                         var e = entities.get(i);
@@ -308,6 +309,7 @@ public final class DebugViews {
                         ImGui.TableNextColumn(); ImGui.TextUnformatted("%+d".formatted(sensor.facing));
                         ImGui.TableNextColumn(); ImGui.TextUnformatted(reading(sensor, sensor.terrain));
                         ImGui.TableNextColumn(); ImGui.TextUnformatted(reading(sensor, sensor.threats));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(sight(sensor));
                     }
                     ImGui.EndTable();
                 }
@@ -315,8 +317,12 @@ public final class DebugViews {
                 for (int i = 0; i < entities.size; i++) {
                     var e = entities.get(i);
                     if (ImGui.TreeNode(Name.of(e) + " " + e)) {
-                        for (var w : Sensor.get(e).whiskers) {
+                        var sensor = Sensor.get(e);
+                        for (var w : sensor.whiskers) {
                             ImGui.TextUnformatted(whisker(w));
+                        }
+                        for (int j = 0; j < sensor.sightingCount; j++) {
+                            ImGui.TextUnformatted(sighting(sensor.sightings[j]));
                         }
                         ImGui.TreePop();
                     }
@@ -336,6 +342,20 @@ public final class DebugViews {
     private static String whisker(Sensor.Whisker w) {
         var hit = w.isHit() ? "%s %s %s".formatted(w.block, w.mask(), Name.of(w.entity)) : "clear";
         return "%+5.0f deg  %6.1f  %s".formatted(w.angleDeg, w.distance, hit);
+    }
+
+    /** "2 seen of 3, nearest 24", "none of 2 seen", "nothing in range", or "-" when the sensor has no sight rays. */
+    private static String sight(Sensor sensor) {
+        if (sensor.sightings == null) return "-";
+        if (sensor.sightingCount == 0) return "nothing in range";
+        var nearest = sensor.nearestSeen();
+        if (nearest == null) return "none of %d seen".formatted(sensor.sightingCount);
+        return "%d seen of %d, nearest %.0f".formatted(sensor.seenCount(), sensor.sightingCount, nearest.distance);
+    }
+
+    private static String sighting(Sensor.Sighting s) {
+        var view = s.seen() ? "seen" : s.isHit() ? "hidden by " + Name.of(s.entity) : "not reached";
+        return "sight %-10s %6.1f  %s".formatted(Name.of(s.target), s.distance, view);
     }
 
     /** Every map in the world: size and counts, then one row per tile layer with a live visibility toggle (collision layers start hidden). */

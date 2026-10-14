@@ -159,6 +159,17 @@ public class CollisionWorld {
      * the platform, the mover's one-way rule stays in {@link #probe}). Every candidate is tested, no broadphase.
      */
     public boolean raycast(float ox, float oy, float dirX, float dirY, float range, int masks, Entity excluded, RayHit out) {
+        return raycast(ox, oy, dirX, dirY, range, masks, excluded, /*throughOneWays*/ false, out);
+    }
+
+    /**
+     * {@link #raycast(float, float, float, float, float, int, Entity, RayHit)} with a choice about one-way
+     * segments: {@code throughOneWays} passes over them, for a line of sight. A segment has no thickness, so
+     * it hides nothing, and a body resting on it sits at the segment's exact distance, which the ray math
+     * orders by rounding and family order (seen from one spot, hidden from the next). A terrain probe keeps
+     * them, a sight ray drops them.
+     */
+    public boolean raycast(float ox, float oy, float dirX, float dirY, float range, int masks, Entity excluded, boolean throughOneWays, RayHit out) {
         var length = (float) Math.sqrt(dirX * dirX + dirY * dirY);
         if (length == 0f) throw new GdxRuntimeException(TAG + ": raycast needs a direction");
 
@@ -178,6 +189,8 @@ public class CollisionWorld {
 
             var otherCol = Collider.get(other);
             if (!otherCol.mask().in(masks)) continue;
+
+            if (throughOneWays && otherCol.shape() instanceof CollisionAASeg) continue;
 
             // Only as far as the best hit so far: a farther shape cannot win
             var dist = otherCol.shape().raycast(ox, oy, dirX, dirY, best, Position.get(other));
