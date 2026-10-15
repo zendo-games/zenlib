@@ -1,5 +1,7 @@
-before_install:
-  - sdk install java 25-open
-  - sdk use java 25-open
 jdk:
   - openjdk25
+install:
+  # JitPack's default Gradle command, then drop the vendored repository before JitPack scans the
+  # checkout for *.pom files: left in place, the frozen jImGui/jParser builds are published as modules
+  # of zenlib and zenlib's dependencies on them are rewritten to coordinates JitPack never serves.
+  - ./gradlew clean -Pgroup=$GROUP -Pversion=$VERSION -xtest assemble publishToMavenLocal && rm -rf vendor/maven

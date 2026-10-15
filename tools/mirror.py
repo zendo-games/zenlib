@@ -3,7 +3,7 @@ Freezes the current jImGui + jParser '-SNAPSHOT' builds into fixed versions.
 
 Downloads every artifact a libGDX desktop + web game needs (following dependencies between the
 two projects), rewrites the '-SNAPSHOT' versions inside each POM to the fixed versions below, and
-writes the result to ./staging in standard Maven repository layout.
+writes the result to vendor/maven in standard Maven repository layout.
 
 Usage: python mirror.py
 """

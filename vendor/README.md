@@ -41,10 +41,25 @@ maven {
 }
 ```
 
-A game resolves zenlib's dependencies with its own repositories, so it needs an entry too:
+A game resolves zenlib's dependencies with its own repositories, so it needs an entry too. The
+folder is served straight from GitHub, which Gradle reads like any other Maven repository:
 
 ```groovy
 // game root build.gradle, inside subprojects { repositories { ... } }
+maven {
+    // jImGui/jParser snapshot builds frozen in zenlib's repository
+    url = 'https://raw.githubusercontent.com/zendo-games/zenlib/main/vendor/maven'
+    content {
+        includeGroup 'com.github.xpenatan.jImGui'
+        includeGroup 'com.github.xpenatan.jParser'
+    }
+}
+```
+
+A game developed against a sibling checkout of zenlib (a composite build, see the main README) can
+read the folder directly instead and fall back to GitHub when the checkout is missing:
+
+```groovy
 maven {
     // jImGui/jParser builds vendored in zenlib: use the sibling checkout if present, otherwise GitHub
     def zenlibVendor = rootProject.file('../zenlib/vendor/maven')
@@ -56,8 +71,6 @@ maven {
     }
 }
 ```
-
-The GitHub URL only works while the zenlib repository is public.
 
 zenlib brings in `imgui-core` and `gdx-gl-impl`. Each game adds the platform pieces to its launchers:
 
@@ -99,10 +112,20 @@ Needs Python 3, no packages.
    result here.
 3. Update `jImGuiVersion` in zenlib and in each game.
 4. Build and run desktop and web before committing; a newer snapshot can change API.
-5. Delete the previous version's folders once nothing references them, or keep them so older
-   commits still build.
+5. Keep the previous version's folders. Every published zenlib release names the frozen versions it
+   was built with in its POM, and consumers read this folder from the `main` branch, so deleting a
+   version that a release depends on breaks that release for everyone. A version may go once no tag
+   references it.
 
 Keep the version format as `zendo-<date>`: it is deliberately not a version upstream would publish.
+
+## JitPack
+
+zenlib is published by [JitPack](https://jitpack.io/#zendo-games/zenlib), which builds a tag from a
+checkout of this repository, so zenlib's own `vendor/maven` entry works there unchanged. After the
+build, JitPack scans the checkout for `*.pom` files and would treat the frozen builds as modules of
+zenlib, rewriting zenlib's dependencies on them to coordinates it never serves. The `install` command
+in [`jitpack.yml`](../jitpack.yml) removes `vendor/maven` after publishing so only zenlib is found.
 
 ## Returning to upstream
 
