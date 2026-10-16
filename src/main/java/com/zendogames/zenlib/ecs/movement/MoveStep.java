@@ -26,8 +26,9 @@ public final class MoveStep {
 
         mover.motion.control(mover, intent, dt);
 
-        sweep(mover, pos, shape, world, /*x-axis*/ true,  dt);
-        sweep(mover, pos, shape, world, /*x-axis*/ false, dt);
+        int stepUp = (shape == null) ? 0 : mover.motion.stepUp(shape);
+        sweep(mover, pos, shape, world, /*x-axis*/ true,  stepUp, dt);
+        sweep(mover, pos, shape, world, /*x-axis*/ false, 0,      dt);
 
         mover.motion.after(mover, intent, pos, shape, world);
     }
@@ -37,9 +38,10 @@ public final class MoveStep {
      * constant acceleration), truncated to whole pixels with the fraction carried in the remainder,
      * so the integer position is always the floor of the exact trajectory. Each pixel is probed
      * before it is taken; a block stops the walk, zeroes velocity and remainder, and reports the
-     * hit direction in {@code xHit}/{@code yHit}.
+     * hit direction in {@code xHit}/{@code yHit}. On the x axis a blocked pixel may instead be
+     * stepped over when the motion's stepUp reach allows it (ramps, low lips).
      */
-    private static void sweep(Mover mover, PointI2 pos, CollisionShape shape, MoveWorld world, boolean isAxisX, float dt) {
+    private static void sweep(Mover mover, PointI2 pos, CollisionShape shape, MoveWorld world, boolean isAxisX, int stepUp, float dt) {
         // Velocity, remainder, acceleration and speed limit for this axis
         var vel      = isAxisX ? mover.xVel      : mover.yVel;
         var rem      = isAxisX ? mover.xRem      : mover.yRem;
@@ -72,6 +74,15 @@ public final class MoveStep {
             var blocked = (block == Block.SOLID)
                        || (block == Block.ONE_WAY && !mover.passThrough);
 
+            if (blocked && stepUp > 0) {
+                // A low obstruction (a ramp's slope, a lip no taller than the reach): lift over it and keep walking
+                int lift = stepUp(shape, pos, world, dx, stepUp);
+                if (lift > 0) {
+                    pos.add(dx, lift);
+                    continue;
+                }
+            }
+
             if (blocked) {
                 // Let the world record who stopped us, then stop all movement on this axis
                 world.onBlocked(dx, dy);
@@ -88,5 +99,15 @@ public final class MoveStep {
 
         if (isAxisX) { mover.xVel = vel; mover.xRem = rem; }
         else         { mover.yVel = vel; mover.yRem = rem; }
+    }
+
+    /** The smallest lift in {@code 1..max} at which moving {@code (dx, lift)} is open, or 0 when the block is a wall. */
+    private static int stepUp(CollisionShape shape, PointI2 pos, MoveWorld world, int dx, int max) {
+        for (int lift = 1; lift <= max; lift++) {
+            if (world.probe(shape, pos.x, pos.y, dx, lift) == Block.NONE) {
+                return lift;
+            }
+        }
+        return 0;
     }
 }

@@ -53,6 +53,7 @@ public record CollisionCaps(Axis axis, Rectangle bounds) implements CollisionSha
     @Override public float bottom(PointI2 position) { return position.y + bounds.y; }
 
     /** Pixels a vertical capsule may step up to clear a low obstruction while moving sideways: its cap radius. */
+    @Override
     public int slideUpHeight() {
         return axis == Axis.VERTICAL ? (int) radius() : 0;
     }

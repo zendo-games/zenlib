@@ -48,4 +48,7 @@ public sealed interface CollisionShape permits CollisionCaps, CollisionRect, Col
 
     /** Capsule cap-center anchor for the "foot" cap; for non-capsule shapes this is the same as {@link #bottom}. */
     default float innerBottom(PointI2 position) { return bottom(position); }
+
+    /** Pixels a sweep may lift this shape to clear a low obstruction while moving sideways (a ramp, a lip); 0 = never. */
+    default int slideUpHeight() { return 0; }
 }

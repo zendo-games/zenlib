@@ -49,6 +49,9 @@ public final class PlatformerMotion implements Motion {
     /** After letting go of a ledge, during which it can't be grabbed again. */
     public float ledgeRegrabLock;
 
+    /** The tick's dt, kept by {@link #control} for the ground to snap in {@link #after}. */
+    private float dt;
+
     /** Direction the mover faces, -1/+1. Follows steering input; a wall jump turns it away from the wall. */
     public int facing = 1;
 
@@ -90,6 +93,7 @@ public final class PlatformerMotion implements Motion {
 
     @Override
     public void control(Mover mover, MoveIntent intent, float dt) {
+        this.dt = dt;
         jumped = false;
         landed = false;
 
@@ -98,6 +102,11 @@ public final class PlatformerMotion implements Motion {
 
         // The sweep treats ONE_WAY as open while dropping through a platform
         mover.passThrough = dropping;
+    }
+
+    @Override
+    public int stepUp(CollisionShape shape) {
+        return shape.slideUpHeight();
     }
 
     @Override
@@ -113,6 +122,25 @@ public final class PlatformerMotion implements Motion {
         var underneath = world.probe(shape, pos.x, pos.y, 0, -1);
         onOneWay = (underneath == Block.ONE_WAY) && !dropping;
         grounded = (underneath == Block.SOLID)   ||  onOneWay;
+
+        // Ground snap: the surface fell away under a walking mover (down a slope, off a lip) by no more
+        // than the step-up reach. Pull it down onto the surface so it stays grounded instead of taking
+        // off, which is what lets it walk down a ramp rather than fly over it.
+        if (!grounded && wasGrounded && !jumpActive && mover.yVel <= 0 && shape != null) {
+            // Reach: a 45-degree slope drops one pixel per pixel of travel, plus the step-up reach for the
+            // shape's own resting offset on a slope (a capsule rests higher on a slope than on a floor)
+            int reach = stepUp(shape) + (int) Math.ceil(Math.abs(mover.xVel) * dt);
+            for (int drop = 1; drop <= reach; drop++) {
+                if (world.probe(shape, pos.x, pos.y, 0, -drop) == Block.NONE) continue;
+                pos.add(0, -(drop - 1));
+                mover.yVel = 0;
+                mover.yRem = 0;
+                underneath = world.probe(shape, pos.x, pos.y, 0, -1);
+                onOneWay   = (underneath == Block.ONE_WAY) && !dropping;
+                grounded   = (underneath == Block.SOLID)   ||  onOneWay;
+                break;
+            }
+        }
 
         if (grounded && !wasGrounded) {
             landed     = true;
@@ -133,8 +161,23 @@ public final class PlatformerMotion implements Motion {
         }
 
         // Wall facts last: every probe overwrites the world's last contact
-        wallDir = (world.probe(shape, pos.x, pos.y, -1, 0) == Block.SOLID) ? -1
-                : (world.probe(shape, pos.x, pos.y, +1, 0) == Block.SOLID) ? +1 : 0;
+        wallDir = isWall(pos, shape, world, -1) ? -1
+                : isWall(pos, shape, world, +1) ? +1 : 0;
+    }
+
+    /** A SOLID one pixel to the side that the step-up cannot clear; a ramp's slope or a low lip is not a wall. */
+    private boolean isWall(PointI2 pos, CollisionShape shape, MoveWorld world, int dir) {
+        if (world.probe(shape, pos.x, pos.y, dir, 0) != Block.SOLID) {
+            return false;
+        }
+
+        int reach = (shape == null) ? 0 : stepUp(shape);
+        for (int lift = 1; lift <= reach; lift++) {
+            if (world.probe(shape, pos.x, pos.y, dir, lift) == Block.NONE) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -27,6 +27,13 @@ public interface Motion {
      */
     default void after(Mover mover, MoveIntent intent, PointI2 pos, CollisionShape shape, MoveWorld world) {}
 
+    /**
+     * Pixels the x sweep may step the mover up to clear a low obstruction (a ramp, a lip) instead of
+     * stopping; 0 for a genre with no "up" (e.g. top-down). The platformer answers with the shape's
+     * {@link CollisionShape#slideUpHeight()}.
+     */
+    default int stepUp(CollisionShape shape) { return 0; }
+
     /** Integrates velocity as written by others; the sweep still stops it on a block. */
     Motion NONE = (mover, intent, dt) -> {};
 }
