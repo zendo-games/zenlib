@@ -1,9 +1,12 @@
 package com.zendogames.zenlib.tilemap;
 
-import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+
+import java.util.Arrays;
 
 /**
  * Reads of a {@link MapObject}'s properties as a spawner wants them. The loader stores every
@@ -15,6 +18,9 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 public final class TiledProps {
 
     public static final String TYPE = "type";
+
+    /** Tiled's own object attributes, which libGDX stores beside the class members; a class member must not reuse one. */
+    public static final String RESERVED = "x, y, width, height, id, name, type, gid, rotation, visible";
 
     private TiledProps() {}
 
@@ -35,6 +41,22 @@ public final class TiledProps {
         if (name != null && !name.isBlank()) return name;
 
         throw new GdxRuntimeException("map object has neither a class nor a name: " + describe(object));
+    }
+
+    /** The region of a tile (gid) object as placed in Tiled, flips applied, or null for a shape or point object. */
+    public static TextureRegion region(MapObject object) {
+        return (object instanceof TiledMapTileMapObject tile) ? tile.getTextureRegion() : null;
+    }
+
+    /** A string member parsed into an enum (case-insensitive), with the object named on the bad value. */
+    public static <E extends Enum<E>> E enumOf(MapObject object, String name, Class<E> type) {
+        var value = require(object, name, String.class);
+        try {
+            return Enum.valueOf(type, value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new GdxRuntimeException("property '%s' on map object %s is '%s', expected one of %s"
+                    .formatted(name, describe(object), value, Arrays.toString(type.getEnumConstants())));
+        }
     }
 
     /** A property that must be there, with the type Tiled was asked for. */

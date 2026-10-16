@@ -30,7 +30,7 @@ public class TileLayer extends Renderable {
     public final OrthographicCamera camera;
     public final boolean collision;
 
-    /** Starts as the layer's visibility in Tiled; collision layers start hidden. A debug view toggles it. */
+    /** Starts as the layer's visibility in Tiled; {@code collision = all} overlays start hidden. A debug view toggles it. */
     public boolean visible;
 
     private final float authoredOffsetX;
@@ -41,7 +41,7 @@ public class TileLayer extends Renderable {
         this.renderer  = renderer;
         this.camera    = camera;
         this.collision = layer.collision();
-        this.visible   = layer.visible() && !layer.collision();
+        this.visible   = layer.visible() && (layer.mode() != Tilemap.CollisionMode.ALL);
         this.layer     = layer.renderLayer();
         this.order     = layer.order();
         this.authoredOffsetX = tiles.getOffsetX();

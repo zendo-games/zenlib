@@ -22,6 +22,11 @@ public final class TileShapes {
 
     private TileShapes() {}
 
+    /** Whether the tile carries a {@code shape} property at all (a {@code tagged} layer consults only these. */
+    public static boolean has(TiledMapTile tile) {
+        return (tile != null) && tile.getProperties().containsKey(PROPERTY);
+    }
+
     /** The shape the cell contributes to a collision grid: its tile's shape, flipped and rotated as the cell is. */
     public static CellShape of(TiledMapTileLayer.Cell cell) {
         var tile = cell.getTile();

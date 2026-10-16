@@ -53,6 +53,20 @@ public class Tilemap implements Component {
     public static Tilemap get(Entity e) { return TYPE.get(e); }
     public static boolean has(Entity e) { return TYPE.has(e); }
 
+    /** How a tile layer is interpreted for the collision grid; see {@link #isCollisionLayer}. */
+    public enum CollisionMode {
+        /** Provides no collision info */
+        NONE,
+        /** Every placed tile is a collision grid cell, shaped by its {@code shape} property (default {@code full}); hidden at runtime */
+        ALL,
+        /** Only tiles with a {@code shape} property are collision grid cells; the rest are art. Drawn as usual. */
+        TAGGED;
+
+        public boolean collides() {
+            return this != NONE;
+        }
+    }
+
     public static final String COLLISION_PROPERTY = "collision";
     public static final String LAYER_PROPERTY     = "layer";
     public static final String ORDER_PROPERTY     = "order";
@@ -63,8 +77,9 @@ public class Tilemap implements Component {
      * One tile layer as classified. {@code order} is the walk index unless the layer sets
      * {@code order}; {@code visible} is the layer's own flag and its groups'.
      */
-    public record Layer(TiledMapTileLayer tiles, RenderLayer renderLayer, int order, boolean collision, boolean visible) {
-        public String name() { return tiles.getName(); }
+    public record Layer(TiledMapTileLayer tiles, RenderLayer renderLayer, int order, CollisionMode mode, boolean visible) {
+        public String  name()      { return tiles.getName(); }
+        public boolean collision() { return mode.collides(); }
     }
 
     public final TiledMap map;
@@ -130,7 +145,7 @@ public class Tilemap implements Component {
         var collider = Collider.grid(mask, tileSize, cols, rows);
         var grid = collider.shape(CollisionGrid.class);
         for (int i = 0; i < collisionLayers.size; i++) {
-            fill(grid, collisionLayers.get(i).tiles());
+            fill(grid, collisionLayers.get(i));
         }
         return collider;
     }
@@ -140,7 +155,7 @@ public class Tilemap implements Component {
         var layer = layer(layerName);
         if (layer == null) throw new GdxRuntimeException(TAG + ": no tile layer named '%s'".formatted(layerName));
         var collider = Collider.grid(mask, tileSize, cols, rows);
-        fill(collider.shape(CollisionGrid.class), layer.tiles());
+        fill(collider.shape(CollisionGrid.class), layer);
         return collider;
     }
 
@@ -198,29 +213,51 @@ public class Tilemap implements Component {
 
     private void add(TiledMapTileLayer tiles, boolean visible) {
         var props       = tiles.getProperties();
-        var collision   = isCollisionLayer(tiles);
-        var renderLayer = RenderLayer.parse(props.get(LAYER_PROPERTY, "", String.class));
+        var mode        = collisionMode(tiles);
+        var renderLayer = RenderLayer.parse(props.get(LAYER_PROPERTY, "", String.class), RenderLayer.parse(tiles.getName()));
         var order       = props.get(ORDER_PROPERTY, nextOrder, Integer.class);
-        var layer       = new Layer(tiles, renderLayer, order, collision, visible);
+        var layer       = new Layer(tiles, renderLayer, order, mode, visible);
         layers.add(layer);
-        if (collision) {
+        if (mode.collides()) {
             collisionLayers.add(layer);
         }
     }
 
     public static boolean isCollisionLayer(MapLayer layer) {
-        return layer.getProperties().get(COLLISION_PROPERTY, false, Boolean.class)
-                || "collision".equals(layer.getName())
-                || "solid".equals(layer.getName());
+        return collisionMode(layer).collides();
     }
 
-    private void fill(CollisionGrid grid, TiledMapTileLayer tiles) {
+    /**
+     * {@code collision = all} or the bool {@code true}, or a layer named {@code collision} / {@code solid}: every tile collides.
+     * {@code collision = tagged}: only tiles with a {@code shape}.
+     * Anything else: none. An unknown string throws naming the layer.
+     */
+    public static CollisionMode collisionMode(MapLayer layer) {
+        var value = layer.getProperties().get(COLLISION_PROPERTY);
+        if (value instanceof Boolean bool) return bool ? CollisionMode.ALL : CollisionMode.NONE;
+        if (value instanceof String  prop) {
+            return switch (prop.trim().toLowerCase()) {
+                case "all", "true"   -> CollisionMode.ALL;
+                case "tagged"        -> CollisionMode.TAGGED;
+                case "none", "false" -> CollisionMode.NONE;
+                default -> throw new GdxRuntimeException(TAG + ": layer '%s': unknown collision mode '%s', expected all, tagged or none"
+                        .formatted(layer.getName(), prop));
+            };
+        }
+        var name = layer.getName();
+        return ("collision".equals(name) || "solid".equals(name)) ? CollisionMode.ALL : CollisionMode.NONE;
+    }
+
+    private void fill(CollisionGrid grid, Layer layer) {
+        var tiles  = layer.tiles();
+        var tagged = layer.mode() == CollisionMode.TAGGED;
         int w = Math.min(cols, tiles.getWidth());
         int h = Math.min(rows, tiles.getHeight());
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
                 var cell = tiles.getCell(x, y);
                 if (cell == null) continue;
+                if (tagged && !TileShapes.has(cell.getTile())) continue;
                 grid.set(x, y, TileShapes.of(cell));
             }
         }
