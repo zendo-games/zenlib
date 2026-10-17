@@ -27,13 +27,13 @@ public class ScreenTransition implements Disposable {
     /** Used when a transition starts without an effect of its own, null picks a random library effect each time. */
     public ScreenTransitionEffect defaultEffect = null;
 
-    private FrameBuffers fbos;
-    private ScreenTransitionEffect effect;
-    private ZenScreen curr;
-    private ZenScreen next;
-    private float percent;
+    protected FrameBuffers fbos;
+    protected ScreenTransitionEffect effect;
+    protected ZenScreen curr;
+    protected ZenScreen next;
+    protected float percent;
 
-    private final int defaultFramebufferHandle;
+    protected final int defaultFramebufferHandle;
 
     public ScreenTransition() {
         // NOTE: replicates GLFrameBuffer.build() binding of the main framebuffer (screen) so we can wrap it for doing full screen effects around ZenGame.draw()

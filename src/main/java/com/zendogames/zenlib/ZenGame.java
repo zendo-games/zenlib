@@ -47,7 +47,7 @@ public abstract class ZenGame extends ApplicationAdapter {
     protected ZenScreen currentScreen;
 
     /** Target of instant screen change, swapped in at the start of the next update. */
-    private ZenScreen pendingScreen;
+    protected ZenScreen pendingScreen;
 
     /** Settings the library needs from the game. */
     public abstract ZenConfig config();
@@ -256,7 +256,7 @@ public abstract class ZenGame extends ApplicationAdapter {
     }
 
     /** The one place a screen becomes current. The previous screen, if any, is hidden and disposed. */
-    private void makeCurrent(ZenScreen newScreen) {
+    protected void makeCurrent(ZenScreen newScreen) {
         var previous = currentScreen;
 
         currentScreen = newScreen;
@@ -270,7 +270,7 @@ public abstract class ZenGame extends ApplicationAdapter {
         Log.info("Screen", "transition: current -> %s", currentScreen.getClass().getSimpleName());
     }
 
-    private void routeInputTo(ZenScreen screen) {
+    protected void routeInputTo(ZenScreen screen) {
         inputMux.clear();
         if (ImGuiGdx.isInitialized()) {
             inputMux.addProcessor(ImGuiGdx.input());
