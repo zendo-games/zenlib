@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.utils.Disposable;
 import com.zendogames.zenlib.Time;
@@ -79,7 +79,7 @@ public class ScreenTransition implements Disposable {
         return finished;
     }
 
-    public void render(SpriteBatch batch, OrthographicCamera camera) {
+    public void render(Batch batch, OrthographicCamera camera) {
         // Nothing to draw into while the window is minimized
         var width  = Gdx.graphics.getBackBufferWidth();
         var height = Gdx.graphics.getBackBufferHeight();

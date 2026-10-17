@@ -1,7 +1,7 @@
 package com.zendogames.zenlib.ecs.components;
 
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.maps.MapGroupLayer;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapLayers;
@@ -166,7 +166,7 @@ public class Tilemap implements Component {
      * {@link OrthogonalTiledMapRenderer} on {@code batch}, the batch the {@code RenderSystem} draws
      * with. {@code camera} is the world camera, for culling. Returns the map entity.
      */
-    public Entity spawn(World world, CollisionMask solid, SpriteBatch batch, OrthographicCamera camera) {
+    public Entity spawn(World world, CollisionMask solid, Batch batch, OrthographicCamera camera) {
         var entity = world.createEntity()
                 .add(new Name("map"))
                 .add(new Position(0, 0))

@@ -4,7 +4,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.MathUtils;
@@ -108,7 +108,7 @@ public class WorldView implements Disposable {
      * Offscreen half: when the buffer path is on, draws the world into the buffer.
      * Call only from {@code ZenScreen.renderOffscreenBuffers}, never inside another framebuffer.
      */
-    public void renderOffscreen(SpriteBatch batch, Consumer<SpriteBatch> drawWorld) {
+    public void renderOffscreen(Batch batch, Consumer<Batch> drawWorld) {
         if (!buffered()) return;
         if (viewport.getScreenWidth() <= 0 || viewport.getScreenHeight() <= 0) return; // minimized, nothing to render
 
@@ -132,7 +132,7 @@ public class WorldView implements Disposable {
      * Onscreen half: draws the buffer over the viewport's rectangle, or when the buffer path is off,
      * draws the world directly through the viewport. Call from {@code ZenScreen.render}.
      */
-    public void renderOnscreen(SpriteBatch batch, OrthographicCamera windowCamera, Consumer<SpriteBatch> drawWorld) {
+    public void renderOnscreen(Batch batch, OrthographicCamera windowCamera, Consumer<Batch> drawWorld) {
         ScreenUtils.clear(clearColor);
         if (buffered() && buffer != null) {
             batch.setProjectionMatrix(windowCamera.combined);

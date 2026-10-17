@@ -6,7 +6,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
@@ -30,7 +30,7 @@ public abstract class ZenScreen implements Screen {
 
     public final ZenGame game;
     public final Assets assets;
-    public final SpriteBatch batch;
+    public final Batch batch;
     public final ShapeDrawer shapes;
     public final TweenManager tween;
     public final OrthographicCamera windowCamera;
@@ -155,7 +155,7 @@ public abstract class ZenScreen implements Screen {
      * cleared with {@code worldView.clearColor}; call {@code batch.begin()} / {@code end()} here. Runs once
      * per frame on whichever path {@link WorldView} is using, so never assume a framebuffer is bound.
      */
-    protected void renderWorld(SpriteBatch batch) {}
+    protected void renderWorld(Batch batch) {}
 
     /** Draw window-space content over the world. The default draws {@link #uiStage}. */
     protected void renderUI() {
@@ -164,7 +164,7 @@ public abstract class ZenScreen implements Screen {
     }
 
     /** Framebuffer passes. Override to add your own, and call super so the world view gets its pass. */
-    public void renderOffscreenBuffers(SpriteBatch batch) {
+    public void renderOffscreenBuffers(Batch batch) {
         worldView.renderOffscreen(batch, this::renderWorld);
     }
 

@@ -2,7 +2,7 @@ package com.zendogames.zenlib.utils;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 
@@ -13,11 +13,11 @@ public final class Draw {
 
     private Draw() {}
 
-    public static void region(SpriteBatch batch, TextureRegion region, Rectangle rect) {
+    public static void region(Batch batch, TextureRegion region, Rectangle rect) {
         region(batch, region, rect, Color.WHITE);
     }
 
-    public static void region(SpriteBatch batch, TextureRegion region, Rectangle rect, Color tint) {
+    public static void region(Batch batch, TextureRegion region, Rectangle rect, Color tint) {
         prevColor.set(batch.getColor());
         batch.setColor(tint);
         batch.draw(region, rect.x, rect.y, rect.width, rect.height);
@@ -25,7 +25,7 @@ public final class Draw {
     }
 
     /** Scales and rotates about ({@code ox}, {@code oy}), an offset from the rectangle's corner. */
-    public static void region(SpriteBatch batch, TextureRegion region, Rectangle rect, Color tint, float ox, float oy, float sx, float sy, float rotation) {
+    public static void region(Batch batch, TextureRegion region, Rectangle rect, Color tint, float ox, float oy, float sx, float sy, float rotation) {
         prevColor.set(batch.getColor());
         batch.setColor(tint);
         batch.draw(region, rect.x, rect.y, ox, oy, rect.width, rect.height, sx, sy, rotation);
@@ -33,7 +33,7 @@ public final class Draw {
     }
 
     /** Fills the rectangle by repeating the texture, which must use {@code TextureWrap.Repeat}. */
-    public static void texture(SpriteBatch batch, Texture texture, Rectangle rect, Color tint) {
+    public static void texture(Batch batch, Texture texture, Rectangle rect, Color tint) {
         prevColor.set(batch.getColor());
         batch.setColor(tint);
         float u2 = rect.width  / texture.getWidth();

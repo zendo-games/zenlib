@@ -1,7 +1,7 @@
 package com.zendogames.zenlib.ecs.components;
 
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.tiles.AnimatedTiledMapTile;
@@ -54,7 +54,7 @@ public class TileLayer extends Renderable {
     }
 
     @Override
-    public void render(SpriteBatch batch, float x, float y) {
+    public void render(Batch batch, float x, float y) {
         if (!visible) return;
         if (renderer.getBatch() != batch) {
             throw new GdxRuntimeException(TAG + ": '%s' was spawned on another batch than the RenderSystem draws with".formatted(name()));

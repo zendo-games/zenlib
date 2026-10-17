@@ -1,6 +1,6 @@
 package com.zendogames.zenlib.ecs.systems;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
@@ -17,12 +17,12 @@ import com.zendogames.zenlib.render.Visual;
  * {@code batch.begin()} and {@code end()}, with the projection already set to the world camera.
  * Positions are interpolated with {@code World.alpha()} while {@code ZenFlag.RENDER_INTERP} is on.
  * <p>
- * The library's {@link Image}, {@link Animator}, and {@link TileLayer} are always drawn;
+ * The library's {@link Image}, {@link Animator}, {@link SpineAnimator} and {@link TileLayer} are always drawn;
  * a game passes the types of its own {@code Renderable} subclasses to the constructor.
  */
 public class RenderSystem extends EntitySystem {
 
-    private final SpriteBatch batch;
+    private final Batch batch;
     private final Array<ComponentType<? extends Renderable>> types;
 
     private final Array<Item> items;
@@ -31,12 +31,13 @@ public class RenderSystem extends EntitySystem {
     private Family family;
 
     @SafeVarargs
-    public RenderSystem(SpriteBatch batch, ComponentType<? extends Renderable>... gameTypes) {
+    public RenderSystem(Batch batch, ComponentType<? extends Renderable>... gameTypes) {
         super(SystemOrder.MANUAL);
         this.batch = batch;
         this.types = new Array<>();
         this.types.add(Image.TYPE);
         this.types.add(Animator.TYPE);
+        this.types.add(SpineAnimator.TYPE);
         this.types.add(TileLayer.TYPE);
         for (var type : gameTypes) {
             this.types.add(type);

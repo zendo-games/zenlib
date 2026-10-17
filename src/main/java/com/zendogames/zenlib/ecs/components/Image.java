@@ -1,7 +1,7 @@
 package com.zendogames.zenlib.ecs.components;
 
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.zendogames.zenlib.ecs.ComponentType;
 import com.zendogames.zenlib.ecs.Entity;
@@ -35,7 +35,7 @@ public class Image extends Renderable {
     public void set(Texture texture)      { value = new Repeat(texture); }
 
     @Override
-    public void render(SpriteBatch batch, float x, float y) {
+    public void render(Batch batch, float x, float y) {
         var rect = rect(x, y);
         switch (value) {
             case Region(TextureRegion region) -> Draw.region(batch, region, rect, tint);

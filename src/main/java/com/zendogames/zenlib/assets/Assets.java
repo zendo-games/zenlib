@@ -10,6 +10,8 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.esotericsoftware.spine.SkeletonData;
+import com.esotericsoftware.spine.utils.SkeletonDataLoader;
 import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.tilemap.ZenTmxMapLoader;
@@ -50,6 +52,7 @@ public class Assets implements Disposable {
         this.mgr = new AssetManager(FILE_HANDLE_RESOLVER);
         this.mgr.setLoader(FreeTypeFontGenerator.class, new FreeTypeFontGeneratorLoader(mgr.getFileHandleResolver()));
         this.mgr.setLoader(TiledMap.class, new ZenTmxMapLoader(mgr.getFileHandleResolver()));
+        this.mgr.setLoader(SkeletonData.class, new SkeletonDataLoader(mgr.getFileHandleResolver()));
         this.disposables = new Array<>();
         this.types = new Array<>();
         this.loadStartMillis = TimeUtils.millis();

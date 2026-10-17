@@ -1,6 +1,7 @@
 package com.zendogames.zenlib.ecs.components;
 
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
@@ -62,7 +63,7 @@ public class Animator extends Renderable {
     }
 
     @Override
-    public void render(SpriteBatch batch, float x, float y) {
+    public void render(Batch batch, float x, float y) {
         if (keyframe == null) return;
         Draw.region(batch, keyframe, rect(x, y), tint);
     }

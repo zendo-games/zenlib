@@ -9,10 +9,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Rectangle;
@@ -40,7 +37,7 @@ public abstract class ZenGame extends ApplicationAdapter {
     public ScreenTransition screenTransition;
     public Assets assets;
     public Texture pixel;
-    public SpriteBatch batch;
+    public Batch batch;
     public ShapeDrawer shapes;
     public DebugUI debugUI;
     public GlyphLayout layout;
@@ -60,6 +57,15 @@ public abstract class ZenGame extends ApplicationAdapter {
 
     /** Called once, after everything (including imgui) has finished loading. */
     protected abstract ZenScreen createFirstScreen();
+
+    /**
+     * The one batch everything draws with. A {@code PolygonSpriteBatch} so Spine meshes and clipping
+     * draw in the same pass as sprites, tile layers and UI; override to return spine's {@code TwoColorPolygonBatch}
+     * when a skeleton uses dark (two color) tinting.
+     */
+    protected Batch createBatch() {
+        return new PolygonSpriteBatch(4000); // 1000 quads per flush, SpriteBatch's default
+    }
 
     /** Dispose what {@link #init} created here. Called once, before the library disposes anything. */
     protected void shutdown() {}
@@ -84,7 +90,7 @@ public abstract class ZenGame extends ApplicationAdapter {
         this.screenTransition = new ScreenTransition();
         this.assets = new Assets();
         this.pixel = createPixel();
-        this.batch = new SpriteBatch();
+        this.batch = createBatch();
         this.shapes = new ShapeDrawer(batch, new TextureRegion(pixel));
         this.debugUI = new DebugUI();
         this.layout = new GlyphLayout();

@@ -1,9 +1,8 @@
 package com.zendogames.zenlib.ui;
 
 import com.github.xpenatan.jparser.runtime.helper.NativeBoolArray;
+import com.github.xpenatan.jparser.runtime.helper.NativeFloatArray;
 import com.zendogames.zenlib.FramePool;
-import com.zendogames.zenlib.Log;
-import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.ecs.Family;
 import com.zendogames.zenlib.ecs.World;
 import com.zendogames.zenlib.ecs.components.*;
@@ -14,8 +13,6 @@ import com.zendogames.zenlib.ecs.systems.ContactSystem;
 import imgui.ImGui;
 import imgui.enums.ImGuiTableColumnFlags;
 import imgui.enums.ImGuiTableFlags;
-
-import java.util.ArrayDeque;
 
 /**
  * {@link DebugView}s over library objects. Each factory captures what it reads and is created once
@@ -406,15 +403,76 @@ public final class DebugViews {
         };
     }
 
+    /** Every {@code SpineAnimator}: what track 0 plays, with pickers for its animations and skins and a time scale slider. */
+    public static DebugView spine(World world) {
+        var family = world.family(Family.all(SpineAnimator.TYPE));
+        return new DebugView() {
+            @Override public String title() { return "Spine"; }
+            @Override public void draw() {
+                var entities = family.entities();
+                ImGui.TextUnformatted("skeletons: " + entities.size);
+
+                if (ImGui.BeginTable("spine", 5, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Entity",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Animation", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Time",      ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Skin",      ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Speed",     ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    for (int i = 0; i < entities.size; i++) {
+                        var e = entities.get(i);
+                        var anim = SpineAnimator.get(e);
+                        var data = anim.skeleton.getData();
+                        var current = anim.state.getTrack(0);
+                        var playing = current == null ? "(none)" : current.getAnimation().getName();
+                        var skin = anim.skeleton.getSkin();
+                        ImGui.PushID(i);
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(Name.of(e) + " " + e);
+                        ImGui.TableNextColumn();
+                        if (ImGui.BeginCombo("##animation", playing)) {
+                            for (var animation : data.getAnimations()) {
+                                var name = animation.getName();
+                                if (ImGui.Selectable(name, name.equals(playing))) {
+                                    anim.start(name, current == null || current.getLoop());
+                                }
+                            }
+                            ImGui.EndCombo();
+                        }
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(current == null ? "" : "%.2fs%s".formatted(current.getTrackTime(), current.getLoop() ? " loop" : (current.isComplete() ? " done" : "")));
+                        ImGui.TableNextColumn();
+                        if (ImGui.BeginCombo("##skin", skin == null ? "(none)" : skin.getName())) {
+                            for (var candidate : data.getSkins()) {
+                                var name = candidate.getName();
+                                if (ImGui.Selectable(name, skin != null && name.equals(skin.getName()))) {
+                                    anim.skin(name);
+                                }
+                            }
+                            ImGui.EndCombo();
+                        }
+                        ImGui.TableNextColumn();
+                        Buffers.slider.setValue(0, anim.state.getTimeScale());
+                        if (ImGui.SliderFloat("##speed", Buffers.slider, 0f, 2f)) {
+                            anim.state.setTimeScale(Buffers.slider.getValue(0));
+                        }
+                        ImGui.PopID();
+                    }
+                    ImGui.EndTable();
+                }
+            }
+        };
+    }
+
     /**
      * Native buffers allocated on first use by this holder class: a {@code NativeBoolArray} created
      * before {@code ImGuiGdx.load()} crashes. One checkbox buffer is reused per table row; PushID
      * keeps the repeated label unique.
      */
     private static final class Buffers {
-        static final NativeBoolArray checkbox     = new NativeBoolArray(1);
-        static final NativeBoolArray paused       = new NativeBoolArray(1);
-        static final NativeBoolArray blockedExits = new NativeBoolArray(1);
+        static final NativeBoolArray  checkbox     = new NativeBoolArray(1);
+        static final NativeBoolArray  paused       = new NativeBoolArray(1);
+        static final NativeBoolArray  blockedExits = new NativeBoolArray(1);
+        static final NativeFloatArray slider       = new NativeFloatArray(1);
     }
 
     private static class TableFlags {
