@@ -1,5 +1,6 @@
 package com.zendogames.zenlib.screens.transition;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -10,6 +11,12 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.utils.Disposable;
 import com.zendogames.zenlib.Time;
 import com.zendogames.zenlib.screens.ZenScreen;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+
+import static com.badlogic.gdx.Gdx.gl;
 
 /** Blends from one screen to another through an effect shader. The game owns both screens and their lifecycle. */
 public class ScreenTransition implements Disposable {
@@ -25,6 +32,19 @@ public class ScreenTransition implements Disposable {
     private ZenScreen curr;
     private ZenScreen next;
     private float percent;
+
+    private final int defaultFramebufferHandle;
+
+    public ScreenTransition() {
+        // NOTE: replicates GLFrameBuffer.build() binding of the main framebuffer (screen) so we can wrap it for doing full screen effects around ZenGame.draw()
+        if (Gdx.app.getType() == Application.ApplicationType.iOS) {
+            IntBuffer intbuf = ByteBuffer.allocateDirect(16 * Integer.SIZE / 8).order(ByteOrder.nativeOrder()).asIntBuffer();
+            gl.glGetIntegerv(GL20.GL_FRAMEBUFFER_BINDING, intbuf);
+            this.defaultFramebufferHandle = intbuf.get(0);
+        } else {
+            this.defaultFramebufferHandle = 0;
+        }
+    }
 
     @Override
     public void dispose() {
@@ -80,6 +100,10 @@ public class ScreenTransition implements Disposable {
     }
 
     public void render(Batch batch, OrthographicCamera camera) {
+        render(batch, camera, defaultFramebufferHandle);
+    }
+
+    public void render(Batch batch, OrthographicCamera camera, int mainFramebufferHandle) {
         // Nothing to draw into while the window is minimized
         var width  = Gdx.graphics.getBackBufferWidth();
         var height = Gdx.graphics.getBackBufferHeight();
@@ -97,7 +121,7 @@ public class ScreenTransition implements Disposable {
         // Render next screen to a buffer
         fbos.transition.begin();
         {
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
             next.render(Time.delta);
         }
         fbos.transition.end();
@@ -105,13 +129,16 @@ public class ScreenTransition implements Disposable {
         // Render next screen to a buffer
         fbos.original.begin();
         {
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
             curr.render(Time.delta);
         }
         fbos.original.end();
 
+        // Resets to incoming framebuffer handle; FrameBuffer.end() calls unbind() which defaults to the screen, typically 0
+        Gdx.gl20.glBindFramebuffer(GL20.GL_FRAMEBUFFER, mainFramebufferHandle);
+
         // Combine next and current screen buffers with transition effect shader, drawing into onscreen buffer
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         var originalTexture   = fbos.original.getColorBufferTexture();
         var transitionTexture = fbos.transition.getColorBufferTexture();
         var shader = effect.shader();
