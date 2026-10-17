@@ -42,8 +42,9 @@ import com.zendogames.zenlib.tilemap.TileShapes;
  *   <li>Property {@code layer} names the {@link RenderLayer} ({@code background}, {@code world},
  *       {@code foreground}, {@code overlay}; default {@code world}); property {@code order}
  *       (int) replaces the layer's position in the file as the order within that render layer.</li>
- *   <li>Group layers are walked into; their offsets and visibility apply to their children.
- *       Image layers are ignored (Tiled's own docs suggest a tileset instead).</li>
+ *   <li>Image layers follow the same {@code layer} / {@code order} conventions and spawn a
+ *       {@link TileImageLayer} entity each; repeat, parallax, tint and opacity come from Tiled.</li>
+ *   <li>Group layers are walked into; their offsets and visibility apply to their children.</li>
  * </ul>
  * One instance is one map entity: {@code spawn} adds this component, so a reload builds a new one.
  */
@@ -82,6 +83,11 @@ public class Tilemap implements Component {
         public boolean collision() { return mode.collides(); }
     }
 
+    /** One image layer as classified: the same {@code order} and {@code visible} rules as {@link Layer}. */
+    public record Image(TiledMapImageLayer image, RenderLayer renderLayer, int order, boolean visible) {
+        public String name() { return image.getName(); }
+    }
+
     public final TiledMap map;
     public final int cols;
     public final int rows;
@@ -98,6 +104,12 @@ public class Tilemap implements Component {
 
     /** What {@link #spawn} created for {@link #layers}, same order; empty until then. */
     public final Array<Entity> layerEntities = new Array<>();
+
+    /** Every image layer in file order. */
+    public final Array<Image> images = new Array<>();
+
+    /** What {@link #spawn} created for {@link #images}, same order; empty until then. */
+    public final Array<Entity> imageEntities = new Array<>();
 
     private int nextOrder = 0;
 
@@ -135,6 +147,17 @@ public class Tilemap implements Component {
         return null;
     }
 
+    /** The image layer with this name, or null. */
+    public Image image(String name) {
+        for (int i = 0; i < images.size; i++) {
+            var image = images.get(i);
+            if (name.equals(image.name())) {
+                return image;
+            }
+        }
+        return null;
+    }
+
     public boolean hasCollision() {
         return collisionLayers.size > 0;
     }
@@ -162,9 +185,10 @@ public class Tilemap implements Component {
     /**
      * Creates the map entity ({@code Name}, {@code Position} at the origin, this, the
      * {@link #gridCollider} when the map has collision layers) and one entity per tile layer
-     * ({@code Name "layer:<name>"}, {@code Position}, {@link TileLayer}), all drawn by one
-     * {@link OrthogonalTiledMapRenderer} on {@code batch}, the batch the {@code RenderSystem} draws
-     * with. {@code camera} is the world camera, for culling. Returns the map entity.
+     * ({@code Name "layer:<name>"}, {@code Position}, {@link TileLayer}) and per image layer
+     * (same, with a {@link TileImageLayer}), all drawn by one {@link OrthogonalTiledMapRenderer} on
+     * {@code batch}, the batch the {@code RenderSystem} draws with. {@code camera} is the world
+     * camera, for culling and parallax. Returns the map entity.
      */
     public Entity spawn(World world, CollisionMask solid, Batch batch, OrthographicCamera camera) {
         var entity = world.createEntity()
@@ -176,6 +200,7 @@ public class Tilemap implements Component {
         }
 
         var renderer = new OrthogonalTiledMapRenderer(map, 1f, batch);
+
         layerEntities.clear();
         for (int i = 0; i < layers.size; i++) {
             var layer = layers.get(i);
@@ -185,8 +210,17 @@ public class Tilemap implements Component {
                     .add(new TileLayer(renderer, camera, layer)));
         }
 
-        Log.debug(TAG, "spawned %s: %dx%d tiles of %d px, %d layers (%d collision), %d objects",
-                entity, cols, rows, tileSize, layers.size, collisionLayers.size, objects.size);
+        imageEntities.clear();
+        for (int i = 0; i < images.size; i++) {
+            var image = images.get(i);
+            imageEntities.add(world.createEntity()
+                    .add(new Name("layer:" + image.name()))
+                    .add(new Position(0, 0))
+                    .add(new TileImageLayer(renderer, camera, image)));
+        }
+
+        Log.debug(TAG, "spawned %s: %dx%d tiles of %d px, %d layers (%d collision), %d images, %d objects",
+                entity, cols, rows, tileSize, layers.size, collisionLayers.size, images.size, objects.size);
         return entity;
     }
 
@@ -200,7 +234,7 @@ public class Tilemap implements Component {
             switch (layer) {
                 case MapGroupLayer      group -> classify(group.getLayers(), visible);
                 case TiledMapTileLayer  tiles -> add(tiles, visible);
-                case TiledMapImageLayer image -> {}
+                case TiledMapImageLayer image -> add(image, visible);
                 default -> {
                     for (var object : layer.getObjects()) {
                         objects.add(object);
@@ -221,6 +255,14 @@ public class Tilemap implements Component {
         if (mode.collides()) {
             collisionLayers.add(layer);
         }
+    }
+
+    private void add(TiledMapImageLayer image, boolean visible) {
+        var props       = image.getProperties();
+        var renderLayer = RenderLayer.parse(props.get(LAYER_PROPERTY, "", String.class), RenderLayer.parse(image.getName()));
+        var order       = props.get(ORDER_PROPERTY, nextOrder, Integer.class);
+        var layer       = new Image(image, renderLayer, order, visible);
+        images.add(layer);
     }
 
     public static boolean isCollisionLayer(MapLayer layer) {

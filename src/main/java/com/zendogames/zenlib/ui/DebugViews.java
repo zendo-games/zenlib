@@ -355,7 +355,7 @@ public final class DebugViews {
         return "sight %-10s %6.1f  %s".formatted(Name.of(s.target), s.distance, view);
     }
 
-    /** Every map in the world: size and counts, then one row per tile layer with a live visibility toggle (collision layers start hidden). */
+    /** Every map in the world: size and counts, then one row per tile and image layer with a live visibility toggle (collision layers start hidden). */
     public static DebugView tilemaps(World world) {
         var family = world.family(Family.all(Tilemap.TYPE));
         return new DebugView() {
@@ -367,8 +367,8 @@ public final class DebugViews {
                     var entity = entities.get(i);
                     var tilemap = Tilemap.get(entity);
                     ImGui.PushID(i);
-                    ImGui.TextUnformatted("%s %s: %dx%d tiles of %d px, %d layers (%d collision), %d objects".formatted(
-                            Name.of(entity), entity, tilemap.cols, tilemap.rows, tilemap.tileSize, tilemap.layers.size, tilemap.collisionLayers.size, tilemap.objects.size));
+                    ImGui.TextUnformatted("%s %s: %dx%d tiles of %d px, %d layers (%d collision), %d images, %d objects".formatted(
+                            Name.of(entity), entity, tilemap.cols, tilemap.rows, tilemap.tileSize, tilemap.layers.size, tilemap.collisionLayers.size, tilemap.images.size, tilemap.objects.size));
 
                     if (ImGui.BeginTable("layers", 5, TableFlags.TABLE)) {
                         ImGui.TableSetupColumn("Layer",   ImGuiTableColumnFlags.WidthStretch);
@@ -383,16 +383,16 @@ public final class DebugViews {
                             if (!layerEntity.isAlive()) continue;
                             var tileLayer = TileLayer.get(layerEntity);
                             ImGui.PushID(j);
-                            ImGui.TableNextRow();
-                            ImGui.TableNextColumn(); ImGui.TextUnformatted(tileLayer.name() + " " + layerEntity);
-                            ImGui.TableNextColumn(); ImGui.TextUnformatted(tileLayer.layer.layerName());
-                            ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(tileLayer.order));
-                            ImGui.TableNextColumn(); ImGui.TextUnformatted(tileLayer.collision ? "collision" : "tiles");
-                            ImGui.TableNextColumn();
-                            Buffers.checkbox.setValue(0, tileLayer.visible);
-                            if (ImGui.Checkbox("##visible", Buffers.checkbox)) {
-                                tileLayer.visible = Buffers.checkbox.getValue(0);
-                            }
+                            tileLayer.visible = layerRow(tileLayer.name() + " " + layerEntity, tileLayer, tileLayer.collision ? "collision" : "tiles", tileLayer.visible);
+                            ImGui.PopID();
+                        }
+                        var images = tilemap.imageEntities;
+                        for (int j = 0; j < images.size; j++) {
+                            var imageEntity = images.get(j);
+                            if (!imageEntity.isAlive()) continue;
+                            var imageLayer = TileImageLayer.get(imageEntity);
+                            ImGui.PushID(layers.size + j);
+                            imageLayer.visible = layerRow(imageLayer.name() + " " + imageEntity, imageLayer, "image", imageLayer.visible);
                             ImGui.PopID();
                         }
                         ImGui.EndTable();
@@ -461,6 +461,21 @@ public final class DebugViews {
                 }
             }
         };
+    }
+
+    /** One row of the tilemaps table; returns the visibility after the checkbox, changed or not. */
+    private static boolean layerRow(String name, Renderable layer, String kind, boolean visible) {
+        ImGui.TableNextRow();
+        ImGui.TableNextColumn(); ImGui.TextUnformatted(name);
+        ImGui.TableNextColumn(); ImGui.TextUnformatted(layer.layer.layerName());
+        ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(layer.order));
+        ImGui.TableNextColumn(); ImGui.TextUnformatted(kind);
+        ImGui.TableNextColumn();
+        Buffers.checkbox.setValue(0, visible);
+        if (ImGui.Checkbox("##visible", Buffers.checkbox)) {
+            return Buffers.checkbox.getValue(0);
+        }
+        return visible;
     }
 
     /**

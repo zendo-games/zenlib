@@ -17,8 +17,8 @@ import com.zendogames.zenlib.render.Visual;
  * {@code batch.begin()} and {@code end()}, with the projection already set to the world camera.
  * Positions are interpolated with {@code World.alpha()} while {@code ZenFlag.RENDER_INTERP} is on.
  * <p>
- * The library's {@link Image}, {@link Animator}, {@link SpineAnimator} and {@link TileLayer} are always drawn;
- * a game passes the types of its own {@code Renderable} subclasses to the constructor.
+ * The library's {@link Image}, {@link Animator}, {@link SpineAnimator}, {@link TileLayer} and {@link TileImageLayer}
+ * are always drawn; a game passes the types of its own {@code Renderable} subclasses to the constructor.
  */
 public class RenderSystem extends EntitySystem {
 
@@ -39,6 +39,7 @@ public class RenderSystem extends EntitySystem {
         this.types.add(Animator.TYPE);
         this.types.add(SpineAnimator.TYPE);
         this.types.add(TileLayer.TYPE);
+        this.types.add(TileImageLayer.TYPE);
         for (var type : gameTypes) {
             this.types.add(type);
         }
