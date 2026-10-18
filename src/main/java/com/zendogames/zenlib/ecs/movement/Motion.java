@@ -34,6 +34,14 @@ public interface Motion {
      */
     default int stepUp(CollisionShape shape) { return 0; }
 
+    /**
+     * Pixels that sweep may shift the mover along the <em>other</em> axis to slip past a blocked pixel
+     * instead of stopping: a diagonal wall in the floor plane (a top-down or beat-em-up genre, where a
+     * ramp cell is a 45-degree wall) deflects the mover along itself at full speed. 0 = stop, the default;
+     * a platformer steps up instead ({@link #stepUp}) since its y axis is gravity.
+     */
+    default int slide(CollisionShape shape) { return 0; }
+
     /** Integrates velocity as written by others; the sweep still stops it on a block. */
     Motion NONE = (mover, intent, dt) -> {};
 }

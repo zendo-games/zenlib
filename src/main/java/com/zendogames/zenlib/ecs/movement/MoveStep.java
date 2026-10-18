@@ -27,8 +27,9 @@ public final class MoveStep {
         mover.motion.control(mover, intent, dt);
 
         int stepUp = (shape == null) ? 0 : mover.motion.stepUp(shape);
-        sweep(mover, pos, shape, world, /*x-axis*/ true,  stepUp, dt);
-        sweep(mover, pos, shape, world, /*x-axis*/ false, 0,      dt);
+        int slide  = (shape == null) ? 0 : mover.motion.slide(shape);
+        sweep(mover, pos, shape, world, intent, /*x-axis*/ true,  stepUp, slide, dt);
+        sweep(mover, pos, shape, world, intent, /*x-axis*/ false, 0,      slide, dt);
 
         mover.motion.after(mover, intent, pos, shape, world);
     }
@@ -41,7 +42,7 @@ public final class MoveStep {
      * hit direction in {@code xHit}/{@code yHit}. On the x axis a blocked pixel may instead be
      * stepped over when the motion's stepUp reach allows it (ramps, low lips).
      */
-    private static void sweep(Mover mover, PointI2 pos, CollisionShape shape, MoveWorld world, boolean isAxisX, int stepUp, float dt) {
+    private static void sweep(Mover mover, PointI2 pos, CollisionShape shape, MoveWorld world, MoveIntent intent, boolean isAxisX, int stepUp, int slide, float dt) {
         // Velocity, remainder, acceleration and speed limit for this axis
         var vel      = isAxisX ? mover.xVel      : mover.yVel;
         var rem      = isAxisX ? mover.xRem      : mover.yRem;
@@ -83,6 +84,15 @@ public final class MoveStep {
                 }
             }
 
+            if (blocked && slide > 0) {
+                // A diagonal (a ramp cell seen from the floor plane): shift along the other axis and keep going
+                int shift = slide(shape, pos, world, dx, dy, slide, isAxisX ? intent.moveY() : intent.moveX());
+                if (shift != 0) {
+                    pos.add(dx + (isAxisX ? 0 : shift), dy + (isAxisX ? shift : 0));
+                    continue;
+                }
+            }
+
             if (blocked) {
                 // Let the world record who stopped us, then stop all movement on this axis
                 world.onBlocked(dx, dy);
@@ -99,6 +109,20 @@ public final class MoveStep {
 
         if (isAxisX) { mover.xVel = vel; mover.xRem = rem; }
         else         { mover.yVel = vel; mover.yRem = rem; }
+    }
+
+    /**
+     * The smallest shift in {@code 1..max} along the other axis at which moving {@code (dx, dy)} plus
+     * that shift is open, signed. {@code prefer} (-1 / 0 / +1) limits the search to one side: 0 tries
+     * both, positive first. 0 when the block is a wall. Also what a motion's wall probe asks.
+     */
+    public static int slide(CollisionShape shape, PointI2 pos, MoveWorld world, int dx, int dy, int max, int prefer) {
+        var isAxisX = (dx != 0);
+        for (int shift = 1; shift <= max; shift++) {
+            if (prefer >= 0 && world.probe(shape, pos.x, pos.y, dx + (isAxisX ? 0 : shift), dy + (isAxisX ? shift : 0)) == Block.NONE) return  shift;
+            if (prefer <= 0 && world.probe(shape, pos.x, pos.y, dx - (isAxisX ? 0 : shift), dy - (isAxisX ? shift : 0)) == Block.NONE) return -shift;
+        }
+        return 0;
     }
 
     /** The smallest lift in {@code 1..max} at which moving {@code (dx, lift)} is open, or 0 when the block is a wall. */
