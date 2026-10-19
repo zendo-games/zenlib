@@ -56,7 +56,7 @@ public abstract class ZenScreen implements Screen {
         this.windowCamera = this.game.windowCamera;
         this.worldCamera = new OrthographicCamera();
         this.worldView = createWorldView();
-        this.uiStage  = new Stage(new ScreenViewport(windowCamera), batch);
+        this.uiStage  = createUiStage();
         this.inputProcessor = createInputProcessor();
         this.inputMux = new InputMultiplexer();
         this.inputMux.addProcessor(uiStage);
@@ -73,6 +73,16 @@ public abstract class ZenScreen implements Screen {
      */
     protected WorldView createWorldView() {
         return new WorldView(worldCamera, Zen.config.framebufferWidth(), Zen.config.framebufferHeight());
+    }
+
+    /**
+     * Override to return a different {@link Stage} for the UI, such as one with controller focus handling.
+     * Runs inside this constructor, before the subclass body, so only {@link #windowCamera} and
+     * {@link #batch} are available. The default is a {@code Stage} on a {@code ScreenViewport} of the
+     * window camera, sharing the game's batch.
+     */
+    protected Stage createUiStage() {
+        return new Stage(new ScreenViewport(windowCamera), batch);
     }
 
     /**
