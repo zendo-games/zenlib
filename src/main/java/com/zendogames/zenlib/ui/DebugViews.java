@@ -10,6 +10,9 @@ import com.zendogames.zenlib.ecs.movement.Motion;
 import com.zendogames.zenlib.ecs.movement.platformer.PlatformerMotion;
 import com.zendogames.zenlib.ecs.movement.topdown.TopDownMotion;
 import com.zendogames.zenlib.ecs.systems.ContactSystem;
+import com.zendogames.zenlib.input.InputState;
+import com.zendogames.zenlib.input.Pad;
+import com.zendogames.zenlib.input.PadAxis;
 import imgui.ImGui;
 import imgui.enums.ImGuiTableColumnFlags;
 import imgui.enums.ImGuiTableFlags;
@@ -456,6 +459,47 @@ public final class DebugViews {
                             anim.state.setTimeScale(Buffers.slider.getValue(0));
                         }
                         ImGui.PopID();
+                    }
+                    ImGui.EndTable();
+                }
+            }
+        };
+    }
+
+    /** The game's {@link InputState}: the clock and mouse, then one row per gamepad slot with its axes and the buttons down. */
+    public static DebugView input(InputState input) {
+        var pads = Pad.values();
+        var axes = PadAxis.values();
+        var text = new StringBuilder();
+        return new DebugView() {
+            @Override public String title() { return "Input"; }
+            @Override public void draw() {
+                var now = input.now;
+                ImGui.TextUnformatted("time %.2f  mouse %d, %d  wheel %.0f, %.0f  gamepads %s".formatted(
+                        input.time, now.mouseX, now.mouseY, now.wheelX, now.wheelY,
+                        input.controllerSource == null ? "off" : "polled"));
+
+                if (ImGui.BeginTable("gamepads", 4, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Slot", ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Axes", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Down", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    for (int slot = 0; slot < now.gamepads.length; slot++) {
+                        var gamepad = now.gamepads[slot];
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(Integer.toString(slot));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(gamepad.connected ? gamepad.name : "-");
+                        text.setLength(0);
+                        for (var axis : axes) {
+                            text.append(axis.name()).append(' ').append("%+.2f".formatted(gamepad.axes[axis.ordinal()])).append("  ");
+                        }
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(gamepad.connected ? text.toString() : "");
+                        text.setLength(0);
+                        for (var pad : pads) {
+                            if (gamepad.buttons.down(pad.ordinal())) text.append(pad.name()).append(' ');
+                        }
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(text.toString());
                     }
                     ImGui.EndTable();
                 }

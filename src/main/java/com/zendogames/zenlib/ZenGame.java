@@ -21,6 +21,7 @@ import com.zendogames.zenlib.accessors.*;
 import com.zendogames.zenlib.assets.Assets;
 import com.zendogames.zenlib.assets.ZenFont;
 import com.zendogames.zenlib.imgui.ImGuiGdx;
+import com.zendogames.zenlib.input.InputState;
 import com.zendogames.zenlib.screens.ZenScreen;
 import com.zendogames.zenlib.screens.transition.ScreenTransition;
 import com.zendogames.zenlib.screens.transition.ScreenTransitionEffect;
@@ -33,6 +34,8 @@ public abstract class ZenGame extends ApplicationAdapter {
 
     public TweenManager tween;
     public InputMultiplexer inputMux;
+    /** This frame's devices and last frame's; bindings read it, {@code ScreenInputProcessor} writes it. */
+    public final InputState input = new InputState();
     public OrthographicCamera windowCamera;
     public ScreenTransition screenTransition;
     public Assets assets;
@@ -84,6 +87,7 @@ public abstract class ZenGame extends ApplicationAdapter {
         Tween.registerAccessor(Vector2.class, new Vector2Accessor());
         Tween.registerAccessor(Vector3.class, new Vector3Accessor());
         this.inputMux = new InputMultiplexer();
+        this.input.controllerSource = InputState.platformControllers();
         this.windowCamera = new OrthographicCamera();
         this.windowCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         this.windowCamera.update();
@@ -142,10 +146,12 @@ public abstract class ZenGame extends ApplicationAdapter {
     @Override
     public void render() {
         Time.update();
+        input.step(Time.frameDelta);
 
         // First screen waits for imgui and assets, which load async
         if (ImGuiGdx.isLoading() || !assets.update()) {
             renderLoading(assets.progress());
+            input.endFrame();
             return;
         }
         if (currentScreen == null) {
@@ -154,6 +160,7 @@ public abstract class ZenGame extends ApplicationAdapter {
 
         update();
         draw();
+        input.endFrame();
     }
 
     protected void update() {

@@ -1,7 +1,6 @@
 package com.zendogames.zenlib.ecs.movement;
 
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.utils.IntSet;
 import com.zendogames.zenlib.collision.CollisionMask;
 import com.zendogames.zenlib.collision.CollisionWorld;
 import com.zendogames.zenlib.ecs.Entity;
@@ -14,6 +13,7 @@ import com.zendogames.zenlib.ecs.movement.topdown.TopDownTuning;
 import com.zendogames.zenlib.ecs.systems.InputSystem;
 import com.zendogames.zenlib.ecs.systems.MovementSystem;
 import com.zendogames.zenlib.input.InputControls;
+import com.zendogames.zenlib.input.InputState;
 import com.zendogames.zenlib.sim.SimulationStep;
 import org.junit.Test;
 
@@ -185,27 +185,35 @@ public class MovementSystemTest {
 
     @Test
     public void inputDrivesTheMover() {
-        var held = new IntSet();
+        var input = new InputState();
         var world = new World();
-        world.addSystem(new InputSystem(held::contains));
+        world.addSystem(new InputSystem(input));
         world.addSystem(new MovementSystem());
         var e = world.createEntity()
                 .add(new Position(0, 0))
                 .add(new Input(InputControls.wasd(Keys.SPACE)))
                 .add(new Mover(new TopDownMotion(TopDownTuning.walker(16))));
 
-        held.add(Keys.D);
-        held.add(Keys.W);
-        for (int i = 0; i < 30; i++) tick(world);
+        input.keyDown(Keys.D);
+        input.keyDown(Keys.W);
+        for (int i = 0; i < 30; i++) frame(input, world);
         var mover = Mover.get(e);
         assertTrue(mover.xVel > 0);
         assertTrue(mover.yVel > 0);
         assertTrue(Position.get(e).x > 0);
         assertTrue(Position.get(e).y > 0);
 
-        held.clear();
-        for (int i = 0; i < 30; i++) tick(world);
+        input.keyUp(Keys.D);
+        input.keyUp(Keys.W);
+        for (int i = 0; i < 30; i++) frame(input, world);
         assertFalse(mover.isMoving());
+    }
+
+    /** One frame with one tick: the state steps, the world updates, the frame ends. */
+    static void frame(InputState input, World world) {
+        input.step(SimulationStep.FIXED_DT);
+        tick(world);
+        input.endFrame();
     }
 
     @Test

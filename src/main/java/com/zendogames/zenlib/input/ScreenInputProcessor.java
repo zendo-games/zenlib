@@ -4,7 +4,6 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Bits;
 import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.ZenFlag;
 import com.zendogames.zenlib.imgui.ImGuiGdx;
@@ -18,11 +17,11 @@ import static com.badlogic.gdx.Input.Keys.*;
  * events that imgui wants or that arrive mid-transition, then call the {@code onXxx}
  * hooks. Games override the hooks and return true to consume an event.
  * <p>
- * Held keys are recorded from the same gated events ({@link #isHeld}), so a system that
- * polls them ({@code InputSystem}) never sees a key that imgui took. A release always clears
- * the key, gated or not, and {@link #clearHeld} runs when the screen is hidden or paused.
+ * Events that pass the gates are also written into {@code game.input} (the {@link InputState}
+ * bindings read), so a key imgui took is never down for the game. A release is always written,
+ * gated or not, and {@code ZenScreen.hide()}/{@code pause()} zero the state, so nothing sticks.
  */
-public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
+public class ScreenInputProcessor extends InputAdapter {
 
     private static final String TAG = "Input";
 
@@ -36,9 +35,6 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
 
     /** Drop every event while the screen is either side of a transition. */
     public boolean ignoreWhileTransitioning = true;
-
-    /** Keys whose keyDown passed the gates and have not been released since. */
-    private final Bits held = new Bits(256);
 
     public ScreenInputProcessor(ZenScreen screen) {
         this.screen = screen;
@@ -76,20 +72,6 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
     }
 
     // ------------------------------------------------------------------------
-    // Held keys
-    // ------------------------------------------------------------------------
-
-    @Override
-    public boolean isHeld(int keycode) {
-        return (keycode >= 0 && held.get(keycode));
-    }
-
-    /** Forgets every held key, e.g. when the screen stops receiving events. */
-    public void clearHeld() {
-        held.clear();
-    }
-
-    // ------------------------------------------------------------------------
     // Gates
     // ------------------------------------------------------------------------
 
@@ -104,21 +86,21 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
     }
 
     // ------------------------------------------------------------------------
-    // InputProcessor: bookkeeping, gate, hook
+    // InputProcessor: bookkeeping, gate, state, hook
     // ------------------------------------------------------------------------
 
     @Override
     public final boolean keyDown(int keycode) {
         log("keyDown %d", keycode);
         if (!acceptsKeyboard()) return false;
-        if (keycode >= 0) held.set(keycode);
+        state().keyDown(keycode);
         return onKeyDown(keycode);
     }
 
     @Override
     public final boolean keyUp(int keycode) {
         log("keyUp %d", keycode);
-        if (keycode >= 0) held.clear(keycode); // a release always counts, even one imgui wants
+        state().keyUp(keycode); // a release always counts, even one imgui wants
         if (keycode == ESCAPE && isShiftPressed() && Gdx.app.getType() == Application.ApplicationType.Desktop) {
             Log.info(TAG, "exit requested by shift+esc");
             Gdx.app.exit();
@@ -140,6 +122,7 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
         updatePointer(screenX, screenY);
         log("touchDown b%d p%d screen(%d, %d) world(%.0f, %.0f)", button, pointer, screenX, screenY, this.pointer.x, this.pointer.y);
         if (!acceptsMouse()) return false;
+        if (pointer == 0) state().mouseDown(button);
         return onTouchDown(screenX, screenY, pointer, button);
     }
 
@@ -147,6 +130,7 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
     public final boolean touchUp(int screenX, int screenY, int pointer, int button) {
         updatePointer(screenX, screenY);
         log("touchUp b%d p%d screen(%d, %d) world(%.0f, %.0f)", button, pointer, screenX, screenY, this.pointer.x, this.pointer.y);
+        if (pointer == 0) state().mouseUp(button); // a release always counts
         if (!acceptsMouse()) return false;
         return onTouchUp(screenX, screenY, pointer, button);
     }
@@ -155,6 +139,7 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
     public final boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
         updatePointer(screenX, screenY);
         log("touchCancelled b%d p%d screen(%d, %d) world(%.0f, %.0f)", button, pointer, screenX, screenY, this.pointer.x, this.pointer.y);
+        if (pointer == 0) state().mouseUp(button);
         if (!acceptsMouse()) return false;
         return onTouchCancelled(screenX, screenY, pointer, button);
     }
@@ -179,6 +164,7 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
     public final boolean scrolled(float amountX, float amountY) {
         log("scrolled (%.1f, %.1f)", amountX, amountY);
         if (!acceptsMouse()) return false;
+        state().scrolled(amountX, amountY);
         return onScrolled(amountX, amountY);
     }
 
@@ -186,13 +172,20 @@ public class ScreenInputProcessor extends InputAdapter implements HeldKeys {
     // Helpers
     // ------------------------------------------------------------------------
 
+    /** The game's input state, which every gated event is written into. */
+    protected InputState state() {
+        return screen.game.input;
+    }
+
     protected boolean isShiftPressed() {
         return Gdx.input.isKeyPressed(SHIFT_LEFT) || Gdx.input.isKeyPressed(SHIFT_RIGHT);
     }
 
+    /** Tracks the pointer in window and world space and in the input state; the position is never gated. */
     protected void updatePointer(int screenX, int screenY) {
         pointerScreen.set(screenX, screenY);
         screen.worldView.unproject(screenX, screenY, pointer);
+        state().mouseMoved(screenX, screenY);
     }
 
     protected void log(String msg, Object... args) {

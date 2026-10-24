@@ -5,48 +5,52 @@ import com.zendogames.zenlib.ecs.Family;
 import com.zendogames.zenlib.ecs.IteratingSystem;
 import com.zendogames.zenlib.ecs.SystemOrder;
 import com.zendogames.zenlib.ecs.components.Input;
-import com.zendogames.zenlib.input.HeldKeys;
+import com.zendogames.zenlib.input.InputState;
 
 /**
- * Writes every {@link Input} from the keyboard, once per tick, first in the tick ({@code INPUT}).
- * The one-tick events are cleared on every {@code Input}, then the ones with {@link Input#controls}
- * set are sampled from {@link HeldKeys} (the screen's input processor, so the imgui capture is
- * already applied); the rest are left for a {@code DECIDE} system to write.
- * TODO: Controllers are not read yet
+ * Writes every {@link Input} from the game's {@link InputState}, once per tick, first in the tick
+ * ({@code INPUT}). The one-tick events are cleared on every {@code Input}; the ones with
+ * {@link Input#controls} set update their bindings against the state (imgui's capture is already
+ * applied, the processor never wrote what imgui took) and are filled from them; the rest are left
+ * for a {@code DECIDE} system to write.
+ * <p>
+ * The state is per frame and ticks are not frames, so the per-tick edges are derived here from the
+ * levels: the action is held this tick when its binding is down <em>or was pressed this frame</em>,
+ * which makes a press and release between two slow frames still a one-tick press, and the second of
+ * two ticks in one frame see a level, not another edge.
  */
 public class InputSystem extends IteratingSystem {
 
     public static final int PRIORITY = SystemOrder.INPUT;
 
-    private final HeldKeys keys;
+    private final InputState input;
 
-    public InputSystem(HeldKeys keys) {
+    public InputSystem(InputState input) {
         super(Family.all(Input.TYPE), PRIORITY);
-        this.keys = (keys != null) ? keys : HeldKeys.NONE;
+        this.input = input;
     }
 
     @Override
     protected void process(Entity e, float dt) {
-        var input = Input.get(e);
-        input.clearFrameEvents();
+        var in = Input.get(e);
+        in.clearFrameEvents();
 
-        var controls = input.controls;
+        var controls = in.controls;
         if (controls == null) return; // written by something else this tick
 
-        var up    = keys.isHeld(controls.up());
-        var down  = keys.isHeld(controls.down());
-        var left  = keys.isHeld(controls.left());
-        var right = keys.isHeld(controls.right());
+        controls.update(input);
+        var move = controls.move;
+        var action = controls.action;
 
-        input.setActionHeld(keys.isHeld(controls.action()));
+        in.leftHeld  = move.x.negative.down();
+        in.rightHeld = move.x.positive.down();
+        in.upHeld    = move.y.positive.down();
+        in.downHeld  = move.y.negative.down();
 
-        input.upHeld    = up;
-        input.downHeld  = down;
-        input.leftHeld  = left;
-        input.rightHeld = right;
+        in.setActionHeld(action.down() || action.pressed());
 
-        // Opposite keys cancel; x goes through the setter for the double-tap dash
-        input.setMoveX((left ? -1 : 0) + (right ? 1 : 0), dt);
-        input.moveY  = (down ? -1 : 0) + (up    ? 1 : 0);
+        // x goes through the setter for the double-tap dash; an overlap reads per the stick's Overlap rule
+        in.setMoveX(move.signX(), dt);
+        in.moveY = move.signY();
     }
 }
