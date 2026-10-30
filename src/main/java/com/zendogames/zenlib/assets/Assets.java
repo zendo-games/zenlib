@@ -71,6 +71,11 @@ public class Assets implements Disposable {
         types.addAll(assetTypes);
     }
 
+    /** Every registered type in registration order; read it, do not change it. */
+    public Array<AssetType<?>> types() {
+        return types;
+    }
+
     /** Queue every registered type. Called once by {@code ZenGame} after {@code init()}. */
     public void load() {
         for (var type : types) {

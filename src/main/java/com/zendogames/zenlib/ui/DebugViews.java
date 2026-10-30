@@ -1,8 +1,13 @@
 package com.zendogames.zenlib.ui;
 
+import com.badlogic.gdx.utils.Array;
 import com.github.xpenatan.jparser.runtime.helper.NativeBoolArray;
 import com.github.xpenatan.jparser.runtime.helper.NativeFloatArray;
 import com.zendogames.zenlib.FramePool;
+import com.zendogames.zenlib.assets.Assets;
+import com.zendogames.zenlib.assets.MusicType;
+import com.zendogames.zenlib.assets.SoundType;
+import com.zendogames.zenlib.audio.Audio;
 import com.zendogames.zenlib.ecs.Family;
 import com.zendogames.zenlib.ecs.World;
 import com.zendogames.zenlib.ecs.components.*;
@@ -502,6 +507,133 @@ public final class DebugViews {
                         ImGui.TableNextColumn(); ImGui.TextUnformatted(text.toString());
                     }
                     ImGui.EndTable();
+                }
+            }
+        };
+    }
+
+    /**
+     * The audio service: a slider and mute per bus, the music with its fade and duck, every voice in
+     * the table with its sound, bus and age, the refusal counters, and a play button for every
+     * registered sound and track so a file can be heard without finding the code that triggers it.
+     */
+    public static DebugView audio(Assets assets) {
+        var sounds = new Array<SoundType>();
+        var tracks = new Array<MusicType>();
+        for (var type : assets.types()) {
+            if (type instanceof SoundType sound) sounds.add(sound);
+            if (type instanceof MusicType track) tracks.add(track);
+        }
+        var reasons = Audio.Refusal.values();
+        var text = new StringBuilder();
+        return new DebugView() {
+            @Override public String title()          { return "Audio"; }
+            @Override public boolean openByDefault() { return false; }
+            @Override public void draw() {
+                if (ImGui.BeginTable("buses", 4, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Bus",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Volume", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Mute",   ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableSetupColumn("Gain",   ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableHeadersRow();
+                    for (var bus : Audio.buses()) {
+                        ImGui.PushID(bus.name());
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(bus.name() + (bus.parent() == null ? "" : " < " + bus.parent().name()));
+                        ImGui.TableNextColumn();
+                        Buffers.slider.setValue(0, bus.volume());
+                        if (ImGui.SliderFloat("##volume", Buffers.slider, 0f, 1f)) {
+                            bus.volume(Buffers.slider.getValue(0));
+                        }
+                        ImGui.TableNextColumn();
+                        Buffers.checkbox.setValue(0, bus.muted());
+                        if (ImGui.Checkbox("##mute", Buffers.checkbox)) {
+                            bus.mute(Buffers.checkbox.getValue(0));
+                        }
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted("%.2f".formatted(bus.gain()));
+                        ImGui.PopID();
+                    }
+                    ImGui.EndTable();
+                }
+
+                var music = Audio.currentMusic();
+                text.setLength(0);
+                text.append("music: ").append(music == null ? "-" : music.asset().label() + " %.0f%%".formatted(Audio.musicLevel() * 100f));
+                if (Audio.isMusicPaused())           text.append(" paused");
+                if (Audio.previousMusic() != null)   text.append("  fading out: ").append(Audio.previousMusic().asset().label());
+                if (Audio.duck() < 1f)               text.append("  duck %.2f".formatted(Audio.duck()));
+                ImGui.TextUnformatted(text.toString());
+                ImGui.SameLine();
+                if (ImGui.SmallButton(Audio.isMusicPaused() ? "resume" : "pause")) {
+                    if (Audio.isMusicPaused()) Audio.resumeMusic(); else Audio.pauseMusic();
+                }
+                ImGui.SameLine();
+                if (ImGui.SmallButton("stop")) Audio.stopMusic();
+
+                Buffers.checkbox.setValue(0, Audio.isPaused());
+                if (ImGui.Checkbox("pause gameplay buses", Buffers.checkbox)) {
+                    if (Buffers.checkbox.getValue(0)) Audio.pause(); else Audio.resume();
+                }
+                ImGui.SameLine();
+                if (ImGui.SmallButton("stop all voices")) Audio.stopAll();
+
+                var voices = Audio.voices();
+                ImGui.TextUnformatted("voices: " + voices.size + "  clock: %.1fs".formatted(Audio.now()));
+                if (voices.size > 0 && ImGui.BeginTable("voices", 7, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Sound",  ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Bus",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Id",     ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableSetupColumn("Age",    ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Volume", ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableSetupColumn("Pitch",  ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableSetupColumn("Pan",    ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableHeadersRow();
+                    for (int i = 0; i < voices.size; i++) {
+                        var voice = voices.get(i);
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(voice.sound.asset().label());
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(voice.sound.bus().name());
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(Long.toString(voice.id));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(voice.looping ? "%.1fs loop".formatted(voice.age())
+                                : "%.2f / %.2fs%s".formatted(voice.age(), voice.sound.duration(), voice.alive() ? "" : " (cooldown)"));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted("%.2f".formatted(voice.volume));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted("%.2f".formatted(voice.pitch));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted("%+.2f%s".formatted(voice.pan, voice.paused ? " paused" : ""));
+                    }
+                    ImGui.EndTable();
+                }
+
+                text.setLength(0);
+                text.append("refused:");
+                for (var reason : reasons) {
+                    var count = Audio.refusals(reason);
+                    if (count == 0) continue;
+                    var last = Audio.lastRefused(reason);
+                    text.append("  ").append(reason.name().toLowerCase()).append(' ').append(count);
+                    if (last != null) text.append(" (").append(last.asset().label()).append(')');
+                }
+                if (text.length() == "refused:".length()) text.append(" none");
+                ImGui.TextUnformatted(text.toString());
+                ImGui.SameLine();
+                if (ImGui.SmallButton("reset")) Audio.resetRefusals();
+
+                if (ImGui.TreeNode("sounds (" + sounds.size + ")")) {
+                    for (var sound : sounds) {
+                        ImGui.PushID(sound.asset().label());
+                        if (ImGui.SmallButton("play")) sound.play();
+                        ImGui.SameLine(); ImGui.TextUnformatted(sound.asset().label() + "  " + sound.file());
+                        ImGui.PopID();
+                    }
+                    ImGui.TreePop();
+                }
+                if (ImGui.TreeNode("music (" + tracks.size + ")")) {
+                    for (var track : tracks) {
+                        ImGui.PushID(track.asset().label());
+                        if (ImGui.SmallButton("play")) track.play();
+                        ImGui.SameLine(); ImGui.TextUnformatted(track.asset().label() + "  " + track.file());
+                        ImGui.PopID();
+                    }
+                    ImGui.TreePop();
                 }
             }
         };

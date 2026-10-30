@@ -13,6 +13,7 @@ public enum ZenFlag implements Flag {
     , LOG_INPUT        (false, FEATURE) // one line per input event reaching a screen handler
     , LOG_TIMERS       (false, FEATURE) // one line per Timers add, fire, restart and cancel
     , LOG_STATE        (false, FEATURE) // one line per StateMachine start, transition or refused request
+    , LOG_AUDIO        (false, FEATURE) // one line per sound start, refusal, pause and music change
     , RENDER_INTERP    (true,  FEATURE)
     , RENDER_FBO       (true,  FEATURE)
     , FRAME_STEP       (false, DEBUG)

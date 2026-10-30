@@ -30,7 +30,7 @@ public final class Asset<T> {
     }
 
     /** {@code GameIcon.WRENCH}, also for constants with a body (whose class is an anonymous subclass). */
-    String label() {
+    public String label() {
         var type = (owner instanceof Enum<?> e) ? e.getDeclaringClass() : owner.getClass();
         return type.getSimpleName() + "." + owner.name();
     }

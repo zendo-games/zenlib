@@ -1,5 +1,7 @@
 package com.zendogames.zenlib;
 
+import com.zendogames.zenlib.audio.Audio;
+
 public class Zen {
 
     public static ZenConfig config;
@@ -11,6 +13,7 @@ public class Zen {
         Prefs.init(config.preferencesName());
         Flags.init();
         FramePool.init();
+        Audio.init();
         Log.info(Zen.class.getSimpleName(), "library initialized " + config);
     }
 }

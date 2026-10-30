@@ -20,6 +20,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.zendogames.zenlib.accessors.*;
 import com.zendogames.zenlib.assets.Assets;
 import com.zendogames.zenlib.assets.ZenFont;
+import com.zendogames.zenlib.audio.Audio;
 import com.zendogames.zenlib.imgui.ImGuiGdx;
 import com.zendogames.zenlib.input.InputState;
 import com.zendogames.zenlib.screens.ZenScreen;
@@ -130,6 +131,7 @@ public abstract class ZenGame extends ApplicationAdapter {
         defaultFont.dispose();
 //        VisUI.dispose();
         ImGuiGdx.dispose();
+        Audio.dispose();
         assets.dispose();
     }
 
@@ -176,6 +178,7 @@ public abstract class ZenGame extends ApplicationAdapter {
         // Update things that must update every tick, these keep running through a Time.pauseFor
         FramePool.resetAll();
         tween.update(frameDt);
+        Audio.update(frameDt);
         windowCamera.update();
         currentScreen.alwaysUpdate(frameDt);
         if (screenTransition.inProgress()) {
