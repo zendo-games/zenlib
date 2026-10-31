@@ -15,6 +15,7 @@ import com.zendogames.zenlib.ecs.movement.Motion;
 import com.zendogames.zenlib.ecs.movement.platformer.PlatformerMotion;
 import com.zendogames.zenlib.ecs.movement.topdown.TopDownMotion;
 import com.zendogames.zenlib.ecs.systems.ContactSystem;
+import com.zendogames.zenlib.ecs.systems.HitSystem;
 import com.zendogames.zenlib.input.InputState;
 import com.zendogames.zenlib.input.Pad;
 import com.zendogames.zenlib.input.PadAxis;
@@ -633,6 +634,64 @@ public final class DebugViews {
                         ImGui.SameLine(); ImGui.TextUnformatted(track.asset().label() + "  " + track.file());
                         ImGui.PopID();
                     }
+                    ImGui.TreePop();
+                }
+            }
+        };
+    }
+
+    /**
+     * The hit system: every fighter with its team, facing, the clip and time its boxes were
+     * resolved for, and the boxes out now ({@code [hit]} on a HIT box, {@code *} on one touching an
+     * opposing box); then the last strikes, oldest first. A fighter that is not vulnerable reads
+     * "immune" beside its team; one whose space anchors its boxes away from its position shows the offset beside its facing.
+     */
+    public static DebugView hitboxes(HitSystem system) {
+        var text = new StringBuilder();
+        return new DebugView() {
+            @Override public String title() { return "Hitboxes"; }
+            @Override public void draw() {
+                var fighters = system.fighters().entities();
+                ImGui.TextUnformatted("%s space, fighters: %d, strikes: %d".formatted(system.space, fighters.size, system.total));
+
+                if (ImGui.BeginTable("fighters", 5, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Entity", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Team",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Facing", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Clip",   ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Boxes",  ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    for (int i = 0; i < fighters.size; i++) {
+                        var e = fighters.get(i);
+                        var boxes = Hitboxes.get(e);
+                        text.setLength(0);
+                        for (int j = 0; j < boxes.active.size; j++) {
+                            var slot = boxes.active.get(j);
+                            if (j > 0) text.append(", ");
+                            text.append(slot.box.name());
+                            if (slot.box.isHit()) text.append("[hit]");
+                            if (slot.touching)    text.append('*');
+                        }
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(Name.of(e) + " " + e);
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(boxes.team + (boxes.vulnerable ? "" : " immune"));
+                        var pos = Position.get(e);
+                        int ax = boxes.anchor.x - pos.x, ay = boxes.anchor.y - pos.y;
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted((ax == 0 && ay == 0) ? "%+d".formatted(boxes.facing) : "%+d at %+d %+d".formatted(boxes.facing, ax, ay));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted((boxes.clip == null) ? "-" : "%s %.2f".formatted(boxes.clip, boxes.clipTime));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(text.toString());
+                    }
+                    ImGui.EndTable();
+                }
+
+                if (ImGui.TreeNode("recent strikes")) {
+                    for (int i = 0; i < system.recent.size; i++) {
+                        var s = system.recent.get(i);
+                        ImGui.TextUnformatted("%s %s -> %s %s, %d damage%s, away %+d".formatted(
+                                Name.of(s.attacker()), s.hit().name(), Name.of(s.target()), s.hurt().name(),
+                                s.attack().damage(), s.attack().heavy() ? " heavy" : "", s.away()));
+                    }
+                    if (ImGui.SmallButton("clear")) system.recent.clear();
                     ImGui.TreePop();
                 }
             }
