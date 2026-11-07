@@ -1,6 +1,7 @@
 package com.zendogames.zenlib;
 
 import com.zendogames.zenlib.audio.Audio;
+import com.zendogames.zenlib.events.Signals;
 
 public class Zen {
 
@@ -14,6 +15,7 @@ public class Zen {
         Flags.init();
         FramePool.init();
         Audio.init();
+        Signals.init();
         Log.info(Zen.class.getSimpleName(), "library initialized " + config);
     }
 }

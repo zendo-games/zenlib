@@ -16,6 +16,7 @@ import com.zendogames.zenlib.ecs.movement.platformer.PlatformerMotion;
 import com.zendogames.zenlib.ecs.movement.topdown.TopDownMotion;
 import com.zendogames.zenlib.ecs.systems.ContactSystem;
 import com.zendogames.zenlib.ecs.systems.HitSystem;
+import com.zendogames.zenlib.events.Signals;
 import com.zendogames.zenlib.input.InputState;
 import com.zendogames.zenlib.input.Pad;
 import com.zendogames.zenlib.input.PadAxis;
@@ -692,6 +693,49 @@ public final class DebugViews {
                                 s.attack().damage(), s.attack().heavy() ? " heavy" : "", s.away()));
                     }
                     if (ImGui.SmallButton("clear")) system.recent.clear();
+                    ImGui.TreePop();
+                }
+            }
+        };
+    }
+
+    /**
+     * Every {@code Signal} in the process: listeners, dispatches and the last event; a Record box keeps
+     * the last {@value #HISTORY_CAPACITY} dispatches across all signals under the table ({@code Signals.record}).
+     */
+    public static DebugView events() {
+        return new DebugView() {
+            @Override public String title() { return "Events"; }
+            @Override public void draw() {
+                var signals = Signals.all();
+                ImGui.TextUnformatted("signals: %d, dispatched: %d".formatted(signals.size, Signals.dispatches()));
+                ImGui.SameLine();
+                Buffers.checkbox.setValue(0, Signals.isRecording());
+                if (ImGui.Checkbox("Record", Buffers.checkbox)) {
+                    Signals.record(Buffers.checkbox.getValue(0) ? HISTORY_CAPACITY : 0);
+                }
+
+                if (ImGui.BeginTable("signals", 4, TableFlags.TABLE)) {
+                    ImGui.TableSetupColumn("Signal",     ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Listeners",  ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Dispatched", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn("Last",       ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableHeadersRow();
+                    for (int i = 0; i < signals.size; i++) {
+                        var s = signals.get(i);
+                        ImGui.TableNextRow();
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(s.name);
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(s.size()));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(String.valueOf(s.dispatches()));
+                        ImGui.TableNextColumn(); ImGui.TextUnformatted(s.last() == null ? "" : String.valueOf(s.last()));
+                    }
+                    ImGui.EndTable();
+                }
+
+                if (Signals.isRecording() && ImGui.TreeNode("history")) {
+                    for (var line : Signals.history) {
+                        ImGui.TextUnformatted(line);
+                    }
                     ImGui.TreePop();
                 }
             }

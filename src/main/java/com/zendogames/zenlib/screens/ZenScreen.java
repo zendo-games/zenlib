@@ -19,6 +19,7 @@ import com.zendogames.zenlib.Zen;
 import com.zendogames.zenlib.ZenGame;
 import com.zendogames.zenlib.assets.Assets;
 import com.zendogames.zenlib.assets.ZenFont;
+import com.zendogames.zenlib.events.Subscriptions;
 import com.zendogames.zenlib.input.ScreenInputProcessor;
 import com.zendogames.zenlib.render.WorldView;
 import com.zendogames.zenlib.ui.DebugView;
@@ -39,6 +40,9 @@ public abstract class ZenScreen implements Screen {
     public final Stage uiStage;
     public final ScreenInputProcessor inputProcessor;
     public final Array<DebugView> debugViews;
+
+    /** This screen's signal listeners, registered with {@code subscriptions.on(SIGNAL, listener)} and removed by {@link #dispose()}. */
+    public final Subscriptions subscriptions;
 
     public InputMultiplexer inputMux;
     public Font font;
@@ -62,6 +66,7 @@ public abstract class ZenScreen implements Screen {
         this.inputMux.addProcessor(uiStage);
         this.inputMux.addProcessor(inputProcessor);
         this.debugViews = new Array<>();
+        this.subscriptions = new Subscriptions();
         this.font = ZenFont.JETBRAINS_MONO_32.get();
         this.layout = new Layout(font);
     }
@@ -136,6 +141,7 @@ public abstract class ZenScreen implements Screen {
     @Override
     public void dispose() {
         Log.debug(TAG, "%s dispose", getClass().getSimpleName());
+        subscriptions.clear();
         worldView.dispose();
         uiStage.dispose();
     }

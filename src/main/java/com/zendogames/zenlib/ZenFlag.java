@@ -15,6 +15,7 @@ public enum ZenFlag implements Flag {
     , LOG_STATE        (false, FEATURE) // one line per StateMachine start, transition or refused request
     , LOG_AUDIO        (false, FEATURE) // one line per sound start, refusal, pause and music change
     , LOG_COMBAT       (false, FEATURE) // one line per HitSystem strike
+    , LOG_EVENTS       (false, FEATURE) // one line per Signal dispatch
     , RENDER_INTERP    (true,  FEATURE)
     , RENDER_FBO       (true,  FEATURE)
     , FRAME_STEP       (false, DEBUG)
