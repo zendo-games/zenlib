@@ -183,7 +183,7 @@ public class HitSystemTest {
         play(red, Clip.PUNCH);
         ticks(18); // 0.3 s, inside the first window
         assertEquals(1, strikes.size);
-        assertTrue(Hitboxes.get(red).struck.contains(blue, true));
+        assertTrue(Hitboxes.get(red).struck.containsKey(blue));
 
         Animator.get(red).time = 0.2f; // back to the window's start: the time range is open again at once
         ticks(1);

@@ -2,12 +2,12 @@ package com.zendogames.zenlib.ecs.combat;
 
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
-import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.OrderedMap;
 import com.zendogames.zenlib.assets.AnimType;
 
 /**
- * A fighter type's hitboxes over its animations: the {@link #base} boxes it always has, and per
- * animation ("clip", the Spine animation name, or the sprite {@code AnimType}'s {@code name()})
+ * A fighter type's hitboxes over its animations: the {@link #base() base} boxes it always has, and
+ * per animation ("clip", the Spine animation name, or the sprite {@code AnimType}'s {@code name()})
  * the {@link Window}s of time in which more boxes are out. One instance is shared by every entity
  * of the type; swap {@code Hitboxes.set} to change the whole table (a weapon pickup).
  * <p>
@@ -20,31 +20,44 @@ import com.zendogames.zenlib.assets.AnimType;
  *     .clip("crouch", Hitbox.hurt("body", rect(-8, 0, 16, 24)))
  *     .window(GameAnim.PUNCH, 0.10f, 0.22f, Hitbox.hit("fist", rect(10, 30, 14, 8), JAB));
  * }</pre>
- * Plain data, built in code for now; the shape a future editor reads and writes.
+ * Plain data, built in code for now and the shape a future editor reads and writes: the tables are
+ * read through {@link #base()}, {@link #clipNames()} and {@link #windows}, grown through the
+ * builders (which keep the {@link #MAX_WINDOWS} limit) and emptied with {@link #clear()}, so an
+ * editor rebuilds a set in place. Clips keep authoring order, so a file written from a set is stable.
  */
 public class HitboxSet {
 
-    /** Windows per clip: {@code HitSystem} keeps the open ones as the bits of an {@code int}. */
-    public static final int MAX_WINDOWS = Integer.SIZE;
+    /**
+     * Windows per clip. {@code HitSystem} keeps the open windows and each target's striking sources
+     * as the bits of an {@code int}: bit {@code i} is window {@code i}, {@link #BASE} is the base boxes.
+     */
+    public static final int MAX_WINDOWS = Integer.SIZE - 1;
+
+    /** The source bit of the base boxes in {@code Hitboxes.Active.source} and {@code Hitboxes.struck}. */
+    public static final int BASE = 1 << MAX_WINDOWS;
 
     /**
      * Boxes out from {@code start} (inclusive) to {@code end} (exclusive) seconds into a clip. Each
-     * window is one activation: it strikes a target at most once while it stays open (see
-     * {@code HitSystem}), so a two-hit move is two windows.
+     * window is one activation: it strikes a target at most once while it stays open, whatever the
+     * other windows of the clip do (see {@code HitSystem}), so a two-hit move is two windows and a
+     * long sweep may hold a short inner window. A value: two windows with equal times and equal
+     * boxes are equal. {@code boxes} is read-only by convention; the set owns it.
      */
-    public record Window(float start, float end, Hitbox... boxes) {
+    public record Window(float start, float end, Array<Hitbox> boxes) {
         public Window {
             if (end <= start) throw new GdxRuntimeException("Window: end %.3f must be after start %.3f".formatted(end, start));
+            if (boxes == null || boxes.size == 0) throw new GdxRuntimeException("Window %.3f..%.3f: at least one box".formatted(start, end));
+        }
+        public Window(float start, float end, Hitbox... boxes) {
+            this(start, end, Array.with(boxes));
         }
         public boolean contains(float time) { return time >= start && time < end; }
     }
 
-    /** Out in every clip unless a window box of the same name replaces it. */
-    public final Array<Hitbox> base = new Array<>();
+    private final Array<Hitbox> base = new Array<>();
+    private final OrderedMap<String, Array<Window>> clips = new OrderedMap<>();
 
-    /** Clip name to its windows, in authoring order. */
-    public final ObjectMap<String, Array<Window>> clips = new ObjectMap<>();
-
+    /** Adds boxes that are out in every clip unless a window box of the same name replaces them. */
     public HitboxSet base(Hitbox... boxes) {
         base.addAll(boxes);
         return this;
@@ -79,7 +92,23 @@ public class HitboxSet {
         return clip(clip.name(), boxes);
     }
 
-    /** The windows authored for {@code clip}; null when it has none. */
+    /** Forgets every box and window; an editor's rebuild. Entities sharing the set see the change next tick. */
+    public void clear() {
+        base.clear();
+        clips.clear();
+    }
+
+    /** The boxes out in every clip, in authoring order; read-only by convention. */
+    public Array<Hitbox> base() {
+        return base;
+    }
+
+    /** The clips with windows, in authoring order; read-only by convention. */
+    public Array<String> clipNames() {
+        return clips.orderedKeys();
+    }
+
+    /** The windows authored for {@code clip}, in authoring order; null when it has none. Read-only by convention. */
     public Array<Window> windows(String clip) {
         return (clip == null) ? null : clips.get(clip);
     }

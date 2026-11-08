@@ -21,11 +21,14 @@ import com.zendogames.zenlib.collision.shapes.CollisionShape;
  * Hitbox.hurt("head", circ(2, 14, 12)).on("head");               // follows the head bone
  * Hitbox.hit("fist", rect(0, -4, 14, 8), JAB).on("front-fist");  // a HIT box needs an Attack
  * }</pre>
+ * The authored value is {@code (name, kind, right, bone, attack)}, the five-argument constructor;
+ * {@link #left} is derived from {@link #right} and a file never stores it. The canonical constructor
+ * is public because a record's is, and it checks that {@code left} is {@code right}'s mirror.
  *
  * @param name   label for the debug view and the responder ("body", "head", "fist"); a later box with the same name replaces it while out (see {@link HitboxSet})
  * @param kind   {@link Kind#HIT} strikes, {@link Kind#HURT} is struck
  * @param right  the shape facing right
- * @param left   the same shape mirrored about the anchor, for facing left
+ * @param left   the same shape mirrored about the anchor, for facing left; derived, never authored or serialized
  * @param bone   the Spine bone the shape is placed from, null for the feet
  * @param attack what a HIT box does when it lands; null on a HURT box
  */
@@ -65,10 +68,18 @@ public record Hitbox(
         if (isHit != hasAttack) {
             throw new GdxRuntimeException(TAG + " '%s': a HIT box needs an attack, a HURT box has none".formatted(name));
         }
+        if (!left.equals(mirror(right))) {
+            throw new GdxRuntimeException(TAG + " '%s': left must be the mirror of right, got %s for %s".formatted(name, left, right));
+        }
     }
 
-    public static Hitbox hurt(String name, CollisionShape shape)                { return new Hitbox(name, Kind.HURT, shape, mirror(shape), null, null); }
-    public static Hitbox hit (String name, CollisionShape shape, Attack attack) { return new Hitbox(name, Kind.HIT,  shape, mirror(shape), null, attack); }
+    /** The authored value: the mirror for facing left is built here. */
+    public Hitbox(String name, Kind kind, CollisionShape right, String bone, Attack attack) {
+        this(name, kind, right, mirror(right), bone, attack);
+    }
+
+    public static Hitbox hurt(String name, CollisionShape shape)                { return new Hitbox(name, Kind.HURT, shape, null, null); }
+    public static Hitbox hit (String name, CollisionShape shape, Attack attack) { return new Hitbox(name, Kind.HIT,  shape, null, attack); }
 
     public static Attack attack     (int damage, float knockback, float height) { return new Attack(damage, knockback, height); }
     public static Attack attackHeavy(int damage, float knockback, float height) { return new Attack(damage, knockback, height, /*heavy*/ true); }

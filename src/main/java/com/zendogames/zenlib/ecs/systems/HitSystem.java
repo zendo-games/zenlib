@@ -12,12 +12,15 @@ import com.zendogames.zenlib.ecs.Family;
 import com.zendogames.zenlib.ecs.IteratingSystem;
 import com.zendogames.zenlib.ecs.SystemOrder;
 import com.zendogames.zenlib.ecs.combat.Hitbox;
+import com.zendogames.zenlib.ecs.combat.HitboxSet;
 import com.zendogames.zenlib.ecs.combat.Strike;
 import com.zendogames.zenlib.ecs.components.Animator;
 import com.zendogames.zenlib.ecs.components.Hitboxes;
 import com.zendogames.zenlib.ecs.components.Name;
 import com.zendogames.zenlib.ecs.components.Position;
 import com.zendogames.zenlib.ecs.components.SpineAnimator;
+
+import java.util.Objects;
 
 import static com.zendogames.zenlib.ZenFlag.LOG_COMBAT;
 
@@ -29,11 +32,15 @@ import static com.zendogames.zenlib.ZenFlag.LOG_COMBAT;
  * boxes match the frame that is drawn. All strikes are found first, then responded to in order, so a
  * trade (two fighters hitting each other on the same tick) reports both.
  * <p>
- * <b>One strike per target per activation.</b> An activation is the set of boxes out for one
- * stretch of a clip: it ends, and the struck targets are forgotten, when the clip changes, restarts
- * or loops, or a window opens or closes. So a window strikes each target once while it stays open
- * and a two-hit move is two windows. Of the target's HURT boxes, the first overlapped (resolve
- * order) is the one reported, so list a "head" before a "body" to let it win.
+ * <b>One strike per target per activation.</b> An activation is one source of boxes, a window of the
+ * playing clip or the base set, for one stretch of the clip: a window's ends when it closes, every
+ * activation ends when the clip changes, restarts or loops. So a window strikes each target once
+ * while it stays open whatever the clip's other windows do (a long sweep may hold a short inner
+ * window), a two-hit move is two windows, and a HIT box in the base set strikes a target once until
+ * the clip changes or {@code Hitboxes.rearm()}. An attacker lands at most one strike per target per
+ * tick: the first HIT box out that overlaps and has not struck the target in its activation. Of the
+ * target's HURT boxes, the first overlapped (resolve order) is the one reported, so list a "head"
+ * before a "body" to let it win.
  * <p>
  * <b>The {@link Space}</b> is the world's geometry: where a fighter's boxes are placed from and
  * whether two boxes meet. The library's is {@link Space#FLAT}, boxes overlapping where they are
@@ -204,8 +211,9 @@ public class HitSystem extends IteratingSystem {
         boxes.clearActive();
         int open = 0;
         if (boxes.set != null) {
-            for (var box : boxes.set.base) {
-                put(e, boxes, box);
+            var base = boxes.set.base();
+            for (int i = 0; i < base.size; i++) {
+                put(e, boxes, base.get(i), HitboxSet.BASE);
             }
             var windows = boxes.set.windows(clip);
             if (windows != null) {
@@ -213,23 +221,38 @@ public class HitSystem extends IteratingSystem {
                     var window = windows.get(i);
                     if (!window.contains(time)) continue;
                     open |= 1 << i;
-                    for (var box : window.boxes()) {
-                        put(e, boxes, box);
+                    var out = window.boxes();
+                    for (int j = 0; j < out.size; j++) {
+                        put(e, boxes, out.get(j), 1 << i);
                     }
                 }
             }
         }
 
-        // A new activation forgets who was struck: a new clip, a restart or loop (time went back), a window opened or closed
-        if (entry != boxes.clipEntry || time < boxes.clipTime || open != boxes.open) {
+        // Activations end: every one on a new clip (by object or by name) or a restart or loop (time went back), a window's when it closes
+        if (entry != boxes.clipEntry || !Objects.equals(clip, boxes.clip) || time < boxes.clipTime) {
             boxes.struck.clear();
+        } else {
+            forget(boxes, boxes.open & ~open);
         }
         boxes.clip      = clip;
         boxes.clipTime  = time;
         boxes.clipEntry = entry;
         boxes.open      = open;
-        for (int i = boxes.struck.size - 1; i >= 0; i--) {
-            if (!boxes.struck.get(i).isAlive()) boxes.struck.removeIndex(i);
+    }
+
+    /** Drops the {@code closed} source bits from every struck target, and the targets left with none or dead. */
+    private static void forget(Hitboxes boxes, int closed) {
+        if (boxes.struck.size == 0) return;
+        var it = boxes.struck.entries().iterator();
+        while (it.hasNext()) {
+            var entry = it.next();
+            int left = entry.value & ~closed;
+            if (left == 0 || !entry.key.isAlive()) {
+                it.remove();
+            } else if (left != entry.value) {
+                boxes.struck.put(entry.key, left); // an existing key: no rehash under the iterator
+            }
         }
     }
 
@@ -242,14 +265,15 @@ public class HitSystem extends IteratingSystem {
         };
     }
 
-    /** Puts {@code box} out in place of an earlier one with the same name, or after the rest. */
-    private void put(Entity e, Hitboxes boxes, Hitbox box) {
+    /** Puts {@code box} out from {@code source} in place of an earlier one with the same name, or after the rest. */
+    private void put(Entity e, Hitboxes boxes, Hitbox box, int source) {
         var slot = boxes.find(box.name());
         if (slot == null) {
             slot = boxes.obtain();
             boxes.active.add(slot);
         }
         slot.box = box;
+        slot.source = source;
         slot.touching = false;
         slot.x = 0;
         slot.y = 0;
@@ -281,7 +305,9 @@ public class HitSystem extends IteratingSystem {
         var tPos = Position.get(target);
         int dx = tPos.x - aPos.x;
         int dy = aPos.y - tPos.y;
+        int struck = a.struck.get(target, 0);
         Hitbox hit = null, hurt = null;
+        int source = 0;
         for (int i = 0; i < a.active.size; i++) {
             var h = a.active.get(i);
             if (!h.box.isHit()) continue;
@@ -293,12 +319,12 @@ public class HitSystem extends IteratingSystem {
                 if (!space.touches(attacker, h, hitAt, target, u, hurtAt)) continue;
                 h.touching = true;
                 u.touching = true;
-                if (hit == null) { hit = h.box; hurt = u.box; }
+                if (hit == null && (struck & h.source) == 0) { hit = h.box; hurt = u.box; source = h.source; }
             }
         }
-        if (hit == null || a.struck.contains(target, true)) return;
+        if (hit == null) return;
 
-        a.struck.add(target);
+        a.struck.put(target, struck | source);
         strikes.add(new Strike(attacker, hit, target, hurt, a.facing, dx, dy));
     }
 

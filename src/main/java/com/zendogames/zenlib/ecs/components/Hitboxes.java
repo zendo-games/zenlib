@@ -1,6 +1,7 @@
 package com.zendogames.zenlib.ecs.components;
 
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectIntMap;
 import com.github.tommyettinger.gdcrux.PointI2;
 import com.zendogames.zenlib.collision.CollisionMask;
 import com.zendogames.zenlib.ecs.Component;
@@ -32,12 +33,15 @@ public class Hitboxes implements Component {
     public static Hitboxes get(Entity e) { return TYPE.get(e); }
     public static boolean  has(Entity e) { return TYPE.has(e); }
 
-    /** One box out this tick: where it sits and whether it touched an opposing box. Read-only for game code. */
+    /** One box out this tick: where it sits, where it came from and whether it touched an opposing box. Read-only for game code. */
     public static final class Active {
         public Hitbox box;
 
         /** Offset of the box from the fighter's {@link Hitboxes#anchor}, pixels: the bone's position for a bone box, else zero. */
         public int x, y;
+
+        /** The activation this box belongs to: {@code 1 << window index} within the playing clip, or {@link HitboxSet#BASE}. */
+        public int source;
 
         /** Overlapped an opposing box this tick. */
         public boolean touching;
@@ -71,16 +75,18 @@ public class Hitboxes implements Component {
     public final Array<Active> active = new Array<>(8);
 
     /**
-     * Targets the boxes out now have struck. One activation strikes a target once: the list is
-     * forgotten when the clip changes, restarts or loops, or a window opens or closes.
+     * Each target struck so far, with the bit set of the {@link Active#source sources} that struck
+     * it. A source strikes a target once per activation: a window's bit is forgotten when it closes,
+     * every bit when the clip changes, restarts or loops, or on {@link #rearm()}. The base boxes'
+     * bit only goes with those, so a persistent HIT box strikes a target once until one of them.
      */
-    public final Array<Entity> struck = new Array<>(4);
+    public final ObjectIntMap<Entity> struck = new ObjectIntMap<>(4);
 
     /** The clip and time the boxes were resolved for this tick, null when nothing is playing. */
     public String clip;
     public float clipTime;
 
-    /** {@code HitSystem}'s: the track entry or animation the time came from, and the bit set of the clip's open windows, to see a new activation. */
+    /** {@code HitSystem}'s: the track entry or animation the time came from, and the bit set of the clip's open windows. */
     public Object clipEntry;
     public int open;
 

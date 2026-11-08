@@ -58,7 +58,7 @@ public class HitboxSetTest {
     }
 
     @Test
-    public void aClipHoldsAtMostThirtyTwoWindows() {
+    public void aClipHoldsAtMostMaxWindows() {
         var set = new HitboxSet();
         for (int i = 0; i < HitboxSet.MAX_WINDOWS; i++) {
             set.window("flurry", i, i + 0.5f, FIST);
