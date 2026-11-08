@@ -68,6 +68,6 @@ public final class SoundGroup {
     public long play()                             { return Audio.play(this, 1f, 0f); }
     public long play(float volume)                 { return Audio.play(this, volume, 0f); }
     public long play(float volume, float pan)      { return Audio.play(this, volume, pan); }
-    public long playAt(float worldX)               { return Audio.play(this, Audio.attenuation(worldX), Audio.pan(worldX)); }
-    public long playAt(float volume, float worldX) { return Audio.play(this, volume * Audio.attenuation(worldX), Audio.pan(worldX)); }
+    public long playAt(float worldX)               { return Audio.playAt(this, 1f, worldX); }
+    public long playAt(float volume, float worldX) { return Audio.playAt(this, volume, worldX); }
 }

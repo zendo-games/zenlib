@@ -7,6 +7,7 @@ import com.badlogic.gdx.utils.ObjectSet;
 import com.badlogic.gdx.utils.Pool;
 import com.zendogames.zenlib.Log;
 import com.zendogames.zenlib.Prefs;
+import com.zendogames.zenlib.Time;
 import com.zendogames.zenlib.assets.MusicType;
 import com.zendogames.zenlib.assets.SoundType;
 import com.zendogames.zenlib.utils.Calc;
@@ -30,14 +31,15 @@ import static com.zendogames.zenlib.ZenFlag.LOG_AUDIO;
  *       stay until stopped. The backend has its own limit (16 OpenAL sources on desktop, the 17th play
  *       silently stops the oldest sound), so caps on the noisy sounds keep that limit for the ones that matter.</li>
  *   <li><b>Refusals.</b> A play that does not happen returns -1 and counts under a {@link Refusal}: zero
- *       gain (a muted bus or volume), cooldown, the voice cap, the bus paused, or the backend gave no id.</li>
+ *       gain (a muted bus or volume; a loop is started silent instead, so unmuting brings it back), cooldown, the
+ *       voice cap, the bus paused, a {@code playAt} out of earshot, or the backend gave no id.</li>
  *   <li><b>Pause.</b> {@link #pause()} freezes the voices on {@link AudioBus#pausable()} buses and refuses
  *       new ones there until {@link #resume()}; UI sounds and music keep going. A pause menu calls both.
  *       {@code Time.pauseFor} (hit-stop) does not touch audio.</li>
  *   <li><b>Music.</b> One track at a time. {@link #music(MusicType, float)} crossfades from the current
  *       one over the given seconds, {@link #duck} dips the music under dialogue or a stinger.</li>
  *   <li><b>Listener.</b> {@link #listener(float, float)}, set each frame from the camera by a screen that
- *       pans, makes {@link #pan(float)} and {@link #attenuation(float)} turn a world x into a stereo
+ *       pans, makes {@link #panAt(float)} and {@link #attenuationAt(float)} turn a world x into a stereo
  *       position and a falloff for {@code playAt}.</li>
  * </ul>
  * {@code ZenFlag.LOG_AUDIO} logs every start, refusal and music change. Everything runs on the render thread.
@@ -62,8 +64,8 @@ public final class Audio {
     /** Updates a listener stays valid for without being set again. */
     static final int LISTENER_FRAMES = 2;
 
-    /** Why a play returned -1. */
-    public enum Refusal { SILENT, COOLDOWN, VOICES, PAUSED, BACKEND }
+    /** Why a play returned -1: zero gain, the constant's or group's cooldown, its voice cap, a paused bus, no backend id, or out of the listener's earshot. */
+    public enum Refusal { SILENT, COOLDOWN, VOICES, PAUSED, BACKEND, DISTANT }
 
     /** One started sound: what the rules count and the debug view lists. Read-only outside the service. */
     public static final class Voice {
@@ -162,6 +164,7 @@ public final class Audio {
      */
     public static void register(AudioBus... newBuses) {
         for (var bus : newBuses) {
+            if (buses.contains(bus, true)) continue;
             var state = bus.state();
             state.reset();
             if (persist) {
@@ -180,7 +183,7 @@ public final class Audio {
     /** Every frame with the frame delta: ages voices out, runs the music fades and the duck. */
     public static void update(float dt) {
         now += dt;
-        if (listenerFrames > 0) listenerFrames--;
+        if (listenerFrames > 0 && !Time.isPaused()) listenerFrames--; // a hit-stop skips the screen's update, where the listener is set
         if (dirty) {
             dirtyFor += dt;
             if (dirtyFor >= PERSIST_DELAY) persistBuses();
@@ -229,14 +232,14 @@ public final class Audio {
         bus.state().volume = volume;
         markDirty();
         applyGains();
-        Log.debug(TAG, "%s volume %.2f", bus.name(), volume);
+        if (LOG_AUDIO.on()) Log.info(LOG_AUDIO, TAG, "%s volume %.2f", bus.name(), volume);
     }
 
     public static void mute(AudioBus bus, boolean muted) {
         bus.state().muted = muted;
         markDirty();
         applyGains();
-        Log.debug(TAG, "%s %s", bus.name(), muted ? "muted" : "unmuted");
+        if (LOG_AUDIO.on()) Log.info(LOG_AUDIO, TAG, "%s %s", bus.name(), muted ? "muted" : "unmuted");
     }
 
     private static void markDirty() {
@@ -278,9 +281,18 @@ public final class Audio {
         return start(sound, volume, pan, pitch, false);
     }
 
-    /** Panned and attenuated by the world x against the {@link #listener}. */
+    /** Panned and attenuated by the world x against the {@link #listener}; out of earshot is refused {@link Refusal#DISTANT} before any other rule. */
     public static long playAt(SoundType sound, float volume, float worldX) {
-        return play(sound, volume * attenuation(worldX), pan(worldX));
+        var attenuation = attenuationAt(worldX);
+        if (attenuation <= 0f) return refuse(Refusal.DISTANT, sound);
+        return play(sound, volume * attenuation, panAt(worldX));
+    }
+
+    /** The group, panned and attenuated like {@link #playAt(SoundType, float, float)}. */
+    public static long playAt(SoundGroup group, float volume, float worldX) {
+        var attenuation = attenuationAt(worldX);
+        if (attenuation <= 0f) return refuse(Refusal.DISTANT, group.last);
+        return play(group, volume * attenuation, panAt(worldX));
     }
 
     /** A looping voice; it never ages out, so keep the id and {@link #stop(long)} it. */
@@ -305,7 +317,7 @@ public final class Audio {
         if (paused && bus.pausable()) return refuse(Refusal.PAUSED, sound);
 
         var gain = volume * sound.volume() * bus.gain();
-        if (gain <= 0f) return refuse(Refusal.SILENT, sound);
+        if (gain <= 0f && !looping) return refuse(Refusal.SILENT, sound); // a loop starts silent: applyGains brings it up on unmute
 
         if (sound.cooldown() > 0f || sound.maxVoices() > 0) {
             var alive = 0;
@@ -350,15 +362,17 @@ public final class Audio {
         voice.looping = looping;
         voice.paused  = false;
         voices.add(voice);
-        Log.info(LOG_AUDIO, TAG, "%s %s id=%d gain=%.2f pitch=%.2f pan=%+.2f",
-                looping ? "loop" : "play", label(sound), id, gain, pitch, pan);
+        if (LOG_AUDIO.on()) {
+            Log.info(LOG_AUDIO, TAG, "%s %s id=%d gain=%.2f pitch=%.2f pan=%+.2f",
+                    looping ? "loop" : "play", label(sound), id, gain, pitch, pan);
+        }
         return id;
     }
 
     private static long refuse(Refusal reason, SoundType sound) {
         refusals[reason.ordinal()]++;
         lastRefused[reason.ordinal()] = sound;
-        Log.info(LOG_AUDIO, TAG, "refused %s: %s", label(sound), reason);
+        if (LOG_AUDIO.on()) Log.info(LOG_AUDIO, TAG, "refused %s: %s", label(sound), reason);
         return -1;
     }
 
@@ -484,6 +498,7 @@ public final class Audio {
             var music = current; var musicType = currentType; var level = currentLevel;
             current = previous;  currentType = previousType;  currentLevel = previousLevel;
             previous = music;    previousType = musicType;    previousLevel = level;
+            musicPaused = false; // the track coming back was never paused, the paused one fades out
             if (fadeSeconds <= 0f) finishFade();
             Log.info(LOG_AUDIO, TAG, "music back to %s fade %.2fs", type.asset().label(), fadeSeconds);
             return;
@@ -540,6 +555,11 @@ public final class Audio {
         Log.info(LOG_AUDIO, TAG, "music stop fade %.2fs", fadeSeconds);
     }
 
+    /**
+     * Pauses the current track where it is; {@link #resumeMusic()} continues it. A fade-in or a fade-out
+     * still running keeps running on the frame clock meanwhile (a track fading out when the pause came
+     * ends during it), and a {@link #music} request while paused plays the new track at once.
+     */
     public static void pauseMusic() {
         if (current == null || musicPaused) return;
         musicPaused = true;
@@ -573,7 +593,8 @@ public final class Audio {
     public static MusicType previousMusic() { return previousType; }
     /** Fade-in level of the current track, 0..1. */
     public static float musicLevel()        { return currentLevel; }
-    public static float duck()              { return duck; }
+    /** The duck in effect, 1 for none; see {@link #duck(float, float)}. */
+    public static float duckLevel()         { return duck; }
     public static boolean isMusicPaused()   { return musicPaused; }
 
     private static void applyMusicVolume(Music music, MusicType type, float level) {
@@ -603,8 +624,9 @@ public final class Audio {
 
     /**
      * Where the player hears from, in world units: the camera's x and half the view's width. Set it every
-     * frame from the screen that pans sounds; it lapses after {@value #LISTENER_FRAMES} updates without a set, so
-     * a screen that stops panning leaves nothing behind. Without one {@link #pan} is 0 and {@link #attenuation} is 1.
+     * frame from the screen that pans sounds ({@code update} is fine: a hit-stop, which skips {@code update}, does
+     * not age it); it lapses after {@value #LISTENER_FRAMES} updates without a set, so a screen that stops panning
+     * leaves nothing behind. Without one {@link #panAt} is 0 and {@link #attenuationAt} is 1.
      */
     public static void listener(float worldX, float halfWidth) {
         listenerFrames = LISTENER_FRAMES;
@@ -613,12 +635,12 @@ public final class Audio {
     }
 
     /** Stereo position of a world x: -1 at the view's left edge, +1 at the right, clamped beyond. */
-    public static float pan(float worldX) {
+    public static float panAt(float worldX) {
         return hasListener() ? MathUtils.clamp((worldX - listenerX) / listenerHalfWidth, -1f, 1f) : 0f;
     }
 
-    /** 1 inside the view, falling linearly to 0 one view width past its edge. */
-    public static float attenuation(float worldX) {
+    /** 1 inside the view, falling linearly to 0 one view width past its edge; {@code playAt} refuses {@link Refusal#DISTANT} at 0. */
+    public static float attenuationAt(float worldX) {
         if (!hasListener()) return 1f;
         var beyond = Math.abs(worldX - listenerX) / listenerHalfWidth - 1f; // 0 at the edge, 2 one view width out
         return MathUtils.clamp(1f - beyond / 2f, 0f, 1f);

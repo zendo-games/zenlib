@@ -563,7 +563,7 @@ public final class DebugViews {
                 text.append("music: ").append(music == null ? "-" : music.asset().label() + " %.0f%%".formatted(Audio.musicLevel() * 100f));
                 if (Audio.isMusicPaused())           text.append(" paused");
                 if (Audio.previousMusic() != null)   text.append("  fading out: ").append(Audio.previousMusic().asset().label());
-                if (Audio.duck() < 1f)               text.append("  duck %.2f".formatted(Audio.duck()));
+                if (Audio.duckLevel() < 1f)          text.append("  duck %.2f".formatted(Audio.duckLevel()));
                 ImGui.TextUnformatted(text.toString());
                 ImGui.SameLine();
                 if (ImGui.SmallButton(Audio.isMusicPaused() ? "resume" : "pause")) {

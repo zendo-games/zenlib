@@ -414,16 +414,16 @@ public class AudioTest {
         var a = TestMusic.A.fake;
         Audio.duck(0.2f, 0.5f);
         Audio.update(0.25f);
-        assertEquals(0.6f, Audio.duck(), EPS);
+        assertEquals(0.6f, Audio.duckLevel(), EPS);
         assertEquals(0.3f, a.volume, EPS);
         Audio.update(0.3f);
-        assertEquals(0.2f, Audio.duck(), EPS);
+        assertEquals(0.2f, Audio.duckLevel(), EPS);
         assertEquals(0.1f, a.volume, EPS);
         Audio.update(1f);                                    // settled: no drift past the target
-        assertEquals(0.2f, Audio.duck(), EPS);
+        assertEquals(0.2f, Audio.duckLevel(), EPS);
 
         Audio.duck(1f, 0f);
-        assertEquals(1f, Audio.duck(), EPS);
+        assertEquals(1f, Audio.duckLevel(), EPS);
         assertEquals(0.5f, a.volume, EPS);
     }
 
@@ -472,24 +472,24 @@ public class AudioTest {
 
     @Test
     public void listenerPansAndAttenuatesByWorldX() {
-        assertEquals(0f, Audio.pan(500f), EPS);
-        assertEquals(1f, Audio.attenuation(500f), EPS);
+        assertEquals(0f, Audio.panAt(500f), EPS);
+        assertEquals(1f, Audio.attenuationAt(500f), EPS);
 
         Audio.listener(100f, 160f);
-        assertEquals(0f, Audio.pan(100f), EPS);
-        assertEquals(1f, Audio.pan(260f), EPS);
-        assertEquals(-1f, Audio.pan(-60f), EPS);
-        assertEquals(1f, Audio.pan(1000f), EPS);
-        assertEquals(0.5f, Audio.pan(180f), EPS);
-        assertEquals(1f, Audio.attenuation(260f), EPS);
-        assertEquals(0.5f, Audio.attenuation(420f), EPS);
-        assertEquals(0f, Audio.attenuation(580f), EPS);
+        assertEquals(0f, Audio.panAt(100f), EPS);
+        assertEquals(1f, Audio.panAt(260f), EPS);
+        assertEquals(-1f, Audio.panAt(-60f), EPS);
+        assertEquals(1f, Audio.panAt(1000f), EPS);
+        assertEquals(0.5f, Audio.panAt(180f), EPS);
+        assertEquals(1f, Audio.attenuationAt(260f), EPS);
+        assertEquals(0.5f, Audio.attenuationAt(420f), EPS);
+        assertEquals(0f, Audio.attenuationAt(580f), EPS);
 
         TestSound.BELL.playAt(420f);
         assertEquals(1f, TestSound.BELL.fake.lastPan, EPS);
         assertEquals(0.25f, TestSound.BELL.fake.lastVolume, EPS);   // 0.5 attenuation * SFX 0.5
-        assertEquals(-1, TestSound.BELL.playAt(1000f));             // attenuated to nothing: SILENT
-        assertEquals(1, Audio.refusals(Refusal.SILENT));
+        assertEquals(-1, TestSound.BELL.playAt(1000f));             // attenuated to nothing: DISTANT
+        assertEquals(1, Audio.refusals(Refusal.DISTANT));
     }
 
     @Test
@@ -498,11 +498,11 @@ public class AudioTest {
         assertTrue(Audio.hasListener());
         Audio.update(0.016f);
         assertTrue(Audio.hasListener());                     // one missed update is fine (set in update, read in render)
-        assertEquals(1f, Audio.pan(260f), EPS);
+        assertEquals(1f, Audio.panAt(260f), EPS);
         Audio.update(0.016f);
         assertFalse(Audio.hasListener());
-        assertEquals(0f, Audio.pan(260f), EPS);
-        assertEquals(1f, Audio.attenuation(1000f), EPS);
+        assertEquals(0f, Audio.panAt(260f), EPS);
+        assertEquals(1f, Audio.attenuationAt(1000f), EPS);
     }
 
     // ------------------------------------------------------------------------
@@ -549,7 +549,7 @@ public class AudioTest {
         assertEquals(ZenBus.values().length, Audio.buses().size);
         assertEquals(0, Audio.voices().size);
         assertNull(Audio.currentMusic());
-        assertEquals(0f, Audio.pan(500f), EPS);
+        assertEquals(0f, Audio.panAt(500f), EPS);
         assertEquals(0f, Audio.now(), EPS);
         assertEquals(0, Audio.refusals(Refusal.BACKEND));
         assertEquals(0, TestSound.HUM.fake.stopped.size);    // forgotten, not stopped: dispose() stops
