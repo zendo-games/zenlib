@@ -11,8 +11,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * The frame protocol: events land between frames and are stamped with the clock as it was, {@code step}
- * advances the clock and polls gamepads, bindings read during the frame, {@code endFrame} rolls
+ * The frame protocol: events land between frames, {@code step} counts the frame, advances the clock and
+ * polls gamepads, bindings read during the frame, {@code endFrame} rolls
  * {@code now} into {@code last} and clears the edges.
  */
 public class InputStateTest {
@@ -49,13 +49,13 @@ public class InputStateTest {
     }
 
     @Test
-    public void pressTimeIsTheStepClock() {
+    public void stepCountsFramesAndAZeroDeltaIsStillAFrame() {
+        assertEquals(0, input.frame);
         input.step(0.5f);
+        input.step(0f);
         input.step(0.5f);
-        input.keyDown(Keys.A);   // between frames: stamped with the clock as it stands, 1.0
-        input.step(0.5f);
-        assertEquals(1.5, input.time, 1e-9);
-        assertEquals(1.0, input.now.keyboard.pressTime(Keys.A), 1e-9);
+        assertEquals(3, input.frame);
+        assertEquals(1.0, input.time, 1e-9);
     }
 
     @Test
@@ -91,7 +91,6 @@ public class InputStateTest {
         assertFalse(input.now.keyboard.down(-1));
         assertFalse(input.now.keyboard.pressed(999));
         assertFalse(input.now.mouse.down(99));
-        assertEquals(0.0, input.now.keyboard.pressTime(999), 0.0);
     }
 
     @Test

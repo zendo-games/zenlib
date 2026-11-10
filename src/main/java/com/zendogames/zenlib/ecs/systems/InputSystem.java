@@ -17,7 +17,9 @@ import com.zendogames.zenlib.input.InputState;
  * The state is per frame and ticks are not frames, so the per-tick edges are derived here from the
  * levels: the action is held this tick when its binding is down <em>or was pressed this frame</em>,
  * which makes a press and release between two slow frames still a one-tick press, and the second of
- * two ticks in one frame see a level, not another edge.
+ * two ticks in one frame see a level, not another edge. The held flags are the stick's four sides as
+ * they are down; {@code moveX}/{@code moveY} go through the stick's {@code roundThreshold} and
+ * {@code Overlap}, so both sides of an axis can be held with a zero steer.
  */
 public class InputSystem extends IteratingSystem {
 
@@ -33,7 +35,7 @@ public class InputSystem extends IteratingSystem {
     @Override
     protected void process(Entity e, float dt) {
         var in = Input.get(e);
-        in.clearFrameEvents();
+        in.clearTickEvents();
 
         var controls = in.controls;
         if (controls == null) return; // written by something else this tick

@@ -149,7 +149,7 @@ public class InputSystemTest {
 
     @Test
     public void aGamepadSteersLikeTheKeys() {
-        wasd.gamepad(0);
+        wasd.addGamepad(0);
 
         frame(() -> pad.buttons[Pad.DPAD_RIGHT.ordinal()] = true);
         assertEquals(+1, input().moveX);

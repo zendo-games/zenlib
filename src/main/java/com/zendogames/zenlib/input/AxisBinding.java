@@ -7,7 +7,10 @@ package com.zendogames.zenlib.input;
  */
 public final class AxisBinding {
 
-    /** What {@link #value()} reads while both sides are down. */
+    /**
+     * What {@link #value()} reads while both sides are down, by the sides' {@link ButtonBinding#timestamp()}; a
+     * side whose press was never seen (held through a {@code zeroOut}, -1) counts as the oldest.
+     */
     public enum Overlap {
         /** The side pressed last; a tie (both in one frame) goes to positive. */
         NEWER,
@@ -90,6 +93,11 @@ public final class AxisBinding {
     /** Either side pressed. */
     public boolean pressed() {
         return negative.pressed() || positive.pressed();
+    }
+
+    /** Either side released. */
+    public boolean released() {
+        return negative.released() || positive.released();
     }
 
     public void consumePress() {

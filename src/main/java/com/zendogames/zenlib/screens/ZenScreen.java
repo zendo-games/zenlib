@@ -3,6 +3,7 @@ package com.zendogames.zenlib.screens;
 import aurelienribon.tweenengine.TweenManager;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -63,6 +64,10 @@ public abstract class ZenScreen implements Screen {
         this.uiStage  = createUiStage();
         this.inputProcessor = createInputProcessor();
         this.inputMux = new InputMultiplexer();
+        this.inputMux.addProcessor(new InputAdapter() { // releases reach game.input before the stage can consume them (a TextField eats every keyUp)
+            @Override public boolean keyUp(int keycode) { game.input.keyUp(keycode); return false; }
+            @Override public boolean touchUp(int screenX, int screenY, int pointer, int button) { if (pointer == 0) game.input.mouseUp(button); return false; }
+        });
         this.inputMux.addProcessor(uiStage);
         this.inputMux.addProcessor(inputProcessor);
         this.debugViews = new Array<>();

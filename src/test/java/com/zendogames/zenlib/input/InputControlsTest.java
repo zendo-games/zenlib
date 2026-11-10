@@ -43,8 +43,8 @@ public class InputControlsTest {
     }
 
     @Test
-    public void gamepadAddsDpadStickAndA() {
-        var controls = InputControls.wasd(Keys.SPACE).gamepad(0);
+    public void addGamepadAddsDpadStickAndA() {
+        var controls = InputControls.wasd(Keys.SPACE).addGamepad(0);
         frames.on(() -> controls.update(frames.input));
 
         frames.frame(() -> frames.pad.press(Pad.DPAD_LEFT));
@@ -66,7 +66,7 @@ public class InputControlsTest {
 
     @Test
     public void keyboardAndPadAreOneBinding() {
-        var controls = InputControls.wasd(Keys.SPACE).gamepad(0);
+        var controls = InputControls.wasd(Keys.SPACE).addGamepad(0);
         frames.on(() -> controls.update(frames.input));
 
         frames.frame(() -> { frames.input.keyDown(Keys.A); frames.pad.press(Pad.DPAD_RIGHT); });

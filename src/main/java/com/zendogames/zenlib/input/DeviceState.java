@@ -21,17 +21,15 @@ public final class DeviceState {
     private static final Pad[] PADS = Pad.values();
     private static final PadAxis[] AXES = PadAxis.values();
 
-    /** A set of buttons: the level ({@link #down}), this frame's edges, and the clock reading of the last press. */
+    /** A set of buttons: the level ({@link #down}) and this frame's edges; {@code ButtonBinding.timestamp()} is the press clock. */
     public static final class Buttons {
 
         private final boolean[] down, pressed, released;
-        private final double[] pressTime;
 
         Buttons(int count) {
             down = new boolean[count];
             pressed = new boolean[count];
             released = new boolean[count];
-            pressTime = new double[count];
         }
 
         public boolean down(int i) {
@@ -46,23 +44,15 @@ public final class DeviceState {
             return inRange(i) && released[i];
         }
 
-        /**
-         * {@link InputState#time} when button {@code i} last went down, 0 if never.
-         */
-        public double pressTime(int i) {
-            return inRange(i) ? pressTime[i] : 0;
-        }
-
         boolean inRange(int i) {
             return i >= 0 && i < down.length;
         }
 
         /** An event: the button went down between frames. A repeat while already down is not a new press. */
-        void press(int i, double time) {
+        void press(int i) {
             if (!inRange(i) || down[i]) return;
             down[i] = true;
             pressed[i] = true;
-            pressTime[i] = time;
         }
 
         /** An event: the button came up. A tap inside one frame keeps both edges; an up without a down is nothing. */
@@ -73,12 +63,11 @@ public final class DeviceState {
         }
 
         /** A polled level, with edges derived against the previous frame's level. */
-        void poll(int i, boolean isDown, Buttons last, double time) {
+        void poll(int i, boolean isDown, Buttons last) {
             boolean wasDown = last.down[i];
             down[i] = isDown;
             pressed[i] = isDown && !wasDown;
             released[i] = !isDown && wasDown;
-            if (pressed[i]) pressTime[i] = time;
         }
 
         boolean anyPressed() {
@@ -90,7 +79,6 @@ public final class DeviceState {
             System.arraycopy(other.down, 0, down, 0, down.length);
             System.arraycopy(other.pressed, 0, pressed, 0, pressed.length);
             System.arraycopy(other.released, 0, released, 0, released.length);
-            System.arraycopy(other.pressTime, 0, pressTime, 0, pressTime.length);
         }
 
         void clearEdges() {
@@ -102,7 +90,6 @@ public final class DeviceState {
         void zeroOut() {
             Arrays.fill(down, false);
             clearEdges();
-            Arrays.fill(pressTime, 0);
         }
     }
 
@@ -116,14 +103,14 @@ public final class DeviceState {
         public final float[] axes = new float[AXES.length];
 
         /** Reads every button and axis of {@code controller}, edges against {@code last}. */
-        void poll(Controller controller, Gamepad last, double time) {
+        void poll(Controller controller, Gamepad last) {
             connected = true;
             name = controller.getName();
             var mapping = controller.getMapping();
             for (var pad : PADS) {
                 int code = mapping == null ? ControllerMapping.UNDEFINED : pad.code(mapping);
                 boolean isDown = code != ControllerMapping.UNDEFINED && controller.getButton(code);
-                buttons.poll(pad.ordinal(), isDown, last.buttons, time);
+                buttons.poll(pad.ordinal(), isDown, last.buttons);
             }
             for (var axis : AXES) {
                 int code = mapping == null ? ControllerMapping.UNDEFINED : axis.code(mapping);
@@ -132,11 +119,11 @@ public final class DeviceState {
         }
 
         /** No controller in this slot: a release edge for whatever was down, axes at rest. */
-        void disconnect(Gamepad last, double time) {
+        void disconnect(Gamepad last) {
             connected = false;
             name = null;
             for (int i = 0; i < PADS.length; i++) {
-                buttons.poll(i, false, last.buttons, time);
+                buttons.poll(i, false, last.buttons);
             }
             Arrays.fill(axes, 0f);
         }

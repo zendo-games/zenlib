@@ -46,7 +46,10 @@ public final class ButtonBinding {
     private final Array<PadSource> pads = new Array<>(2);
     private final Array<AxisSource> axes = new Array<>(2);
 
-    /** {@code input.time} at the last update; a change means a new frame. */
+    /** {@code input.frame} at the last update; a change means a new frame, which ends the consumes. */
+    private long frame = -1;
+
+    /** {@code input.time} at the last update, for the buffers and the held time. */
     private double time = -1;
 
     /** This frame's level, raw edges and analog value. */
@@ -124,11 +127,12 @@ public final class ButtonBinding {
     // ------------------------------------------------------------------------
 
     public void update(InputState input) {
-        if (input.time != time) {
-            time = input.time;
+        if (input.frame != frame) {
+            frame = input.frame;
             pressConsumed = false;
             releaseConsumed = false;
         }
+        time = input.time;
         var now = input.now;
         var last = input.last;
 
@@ -166,14 +170,14 @@ public final class ButtonBinding {
         }
 
         if (pressed) {
-            timestamp = time;
-            lastPressTime = time;
+            timestamp  = time;
             pressStart = time;
+            if (!pressConsumed) lastPressTime = time; // a second tick in the frame must not undo a consume
         }
-        if (released) {
+        if (released && !releaseConsumed) {
             lastReleaseTime = time;
         }
-        if (down) {
+        if (down || pressed) { // a tap inside one frame is not down, but its hold is this frame's
             if (pressStart < 0) pressStart = time; // already held when first seen: count from here
             heldTime = (float) (time - pressStart);
         }

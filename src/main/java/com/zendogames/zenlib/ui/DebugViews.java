@@ -482,8 +482,8 @@ public final class DebugViews {
             @Override public String title() { return "Input"; }
             @Override public void draw() {
                 var now = input.now;
-                ImGui.TextUnformatted("time %.2f  mouse %d, %d  wheel %.0f, %.0f  gamepads %s".formatted(
-                        input.time, now.mouseX, now.mouseY, now.wheelX, now.wheelY,
+                ImGui.TextUnformatted("frame %d  time %.2f  mouse %d, %d  wheel %.0f, %.0f  gamepads %s".formatted(
+                        input.frame, input.time, now.mouseX, now.mouseY, now.wheelX, now.wheelY,
                         input.controllerSource == null ? "off" : "polled"));
 
                 if (ImGui.BeginTable("gamepads", 4, TableFlags.TABLE)) {

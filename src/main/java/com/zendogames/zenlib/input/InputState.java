@@ -14,9 +14,8 @@ import static com.badlogic.gdx.Application.ApplicationType;
  * The game's input, one instance as {@code ZenGame.input}: this frame's devices ({@link #now}), last
  * frame's ({@link #last}) and a clock that never pauses. The frame protocol, run by {@code ZenGame}:
  * <ol>
- *   <li>events arrive from {@code ScreenInputProcessor} between frames and write {@code now} at once,
- *       stamped with {@link #time} as it stands;</li>
- *   <li>{@link #step} advances the clock by the frame delta and polls the gamepads;</li>
+ *   <li>events arrive from {@code ScreenInputProcessor} between frames and write {@code now} at once;</li>
+ *   <li>{@link #step} counts the frame, advances the clock by the frame delta and polls the gamepads;</li>
  *   <li>bindings {@code update(input)} and systems read, as many times as the frame ticks;</li>
  *   <li>{@link #endFrame} rolls {@code now} into {@code last} and clears the edges.</li>
  * </ol>
@@ -31,6 +30,9 @@ public final class InputState {
 
     public final DeviceState now = new DeviceState();
     public final DeviceState last = new DeviceState();
+
+    /** Frames so far, {@code ++} per {@link #step}; bindings tell a new frame by it (a zero {@code dt} leaves {@link #time} alone). */
+    public long frame;
 
     /** Seconds, {@code += dt} per {@link #step}. Press timestamps and press buffers read it. Never paused. */
     public double time;
@@ -51,7 +53,7 @@ public final class InputState {
     // ---- events, written by ScreenInputProcessor between frames ----------------------------------------
 
     public void keyDown(int keycode) {
-        now.keyboard.press(keycode, time);
+        now.keyboard.press(keycode);
     }
 
     public void keyUp(int keycode) {
@@ -59,7 +61,7 @@ public final class InputState {
     }
 
     public void mouseDown(int button) {
-        now.mouse.press(button, time);
+        now.mouse.press(button);
     }
 
     public void mouseUp(int button) {
@@ -78,8 +80,9 @@ public final class InputState {
 
     // ---- the frame ------------------------------------------------------------------------------------
 
-    /** Advances the clock, then polls every gamepad slot into {@link #now} with edges against {@link #last}. */
+    /** Counts the frame and advances the clock, then polls every gamepad slot into {@link #now} with edges against {@link #last}. */
     public void step(float dt) {
+        frame++;
         time += dt;
         pollGamepads();
     }
@@ -96,7 +99,7 @@ public final class InputState {
         last.zeroOut();
     }
 
-    /** A key, mouse button or pad button went down this framtton". */
+    /** A key, mouse button or pad button went down this frame. */
     public boolean anyPressed() {
         return now.anyPressed();
     }
@@ -114,9 +117,9 @@ public final class InputState {
         for (int slot = 0; slot < DeviceState.GAMEPADS; slot++) {
             var controller = (controllers != null && slot < controllers.size) ? controllers.get(slot) : null;
             if (controller != null && controller.isConnected()) {
-                now.gamepads[slot].poll(controller, last.gamepads[slot], time);
+                now.gamepads[slot].poll(controller, last.gamepads[slot]);
             } else {
-                now.gamepads[slot].disconnect(last.gamepads[slot], time);
+                now.gamepads[slot].disconnect(last.gamepads[slot]);
             }
         }
     }

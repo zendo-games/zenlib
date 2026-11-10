@@ -8,7 +8,9 @@ import com.badlogic.gdx.utils.Array;
  * bindings, so a menu written for the keyboard works from a pad: a stick direction entered sends
  * {@code keyDown}, left sends {@code keyUp}, and a direction held past {@link #repeatDelay} sends
  * another {@code keyDown} every {@link #repeatInterval} with no {@code keyUp} between them, as OS key
- * repeat does. A button sends {@code keyDown} on its press and {@code keyUp} on its release, no repeat.
+ * repeat does. A button sends {@code keyDown} when it goes down and {@code keyUp} when it comes up, no repeat;
+ * a tap inside one frame sends both, in order. The key-up follows the level, so a press buffer on a
+ * button would send a down/up pair per frame for the buffer's length: give a menu button none.
  * <p>
  * {@link #update} updates the bindings it was given, so a screen calls it once per frame from
  * {@code alwaysUpdate}; sharing a binding with {@code InputSystem} is fine, both read the same frame.
@@ -79,10 +81,12 @@ public final class KeySender {
         for (int i = 0; i < buttons.size; i++) {
             var button = buttons.get(i);
             button.binding.update(input);
-            if (button.binding.pressed() && !button.held) {
+            var down = button.binding.down();
+            if (!button.held && (down || button.binding.pressed())) {
                 button.held = true;
                 target.keyDown(button.keycode);
-            } else if (button.binding.released() && button.held) {
+            }
+            if (button.held && !down) { // not else: a tap inside one frame sends its keyUp right after its keyDown
                 button.held = false;
                 target.keyUp(button.keycode);
             }

@@ -4,8 +4,9 @@ import static com.badlogic.gdx.Input.Keys.*;
 
 /**
  * One player's bindings for the library's {@code Input} component: a {@link #move} stick and an
- * {@link #action} button. The presets bind a keyboard layout; {@link #gamepad} adds a pad on top, so
- * keys and pad drive the same bindings (the newer press wins an overlap). {@code InputSystem} calls
+ * {@link #action} button. The presets bind a keyboard layout; {@link #addGamepad} adds a pad on top, so
+ * keys and pad drive the same bindings (the newer press wins an overlap); the bindings' own
+ * {@code gamepad(int)} retargets the pad sources already there. {@code InputSystem} calls
  * {@link #update} every tick and derives its per-tick edges itself, so {@link #action} carries no
  * press buffer. A game with more actions keeps its own bindings beside these.
  */
@@ -35,7 +36,7 @@ public final class InputControls {
     }
 
     /** Adds gamepad slot {@code index}: d-pad and left stick (at {@link #STICK_THRESHOLD}) steer, {@code A} is the action. */
-    public InputControls gamepad(int index) {
+    public InputControls addGamepad(int index) {
         move.dpad(index).leftStick(index, STICK_THRESHOLD);
         action.pad(index, Pad.A);
         return this;

@@ -91,6 +91,11 @@ public final class StickBinding {
         return x.pressed() || y.pressed();
     }
 
+    /** Any side of either axis released. */
+    public boolean released() {
+        return x.released() || y.released();
+    }
+
     public void consumePress() {
         x.consumePress();
         y.consumePress();

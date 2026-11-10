@@ -9,7 +9,7 @@ import com.zendogames.zenlib.input.InputControls;
 /**
  * One entity's control state for this tick, in device-neutral terms: a steer on each axis, the
  * four directions as held flags, an action with its edges, and a double-tap dash. Written by
- * {@link InputSystem} from the held keys when {@link #controls} is set; an AI-driven entity has a
+ * {@link InputSystem} from its bindings when {@link #controls} is set; an AI-driven entity has a
  * null {@code controls} and a {@code DECIDE} system writes the same fields instead, so movers
  * never know who is steering them. {@code MoveIntent.of(input)} is the read side.
  */
@@ -22,7 +22,7 @@ public class Input implements Component {
     /** Seconds within which a second tap in the same direction counts as a double tap. */
     public static final float DOUBLE_TAP_WINDOW = 0.25f;
 
-    /** Key bindings for {@link InputSystem}; null means something other than the keyboard writes this component. */
+    /** The player's bindings (keys, pad) for {@link InputSystem}; null means something other than a player writes this component. */
     public InputControls controls;
 
     /** -1 / 0 / +1 on each axis; up is positive like the world. */
@@ -77,7 +77,7 @@ public class Input implements Component {
     }
 
     /** Clears the one-tick events; held state and steer are kept. Called by {@link InputSystem} at the top of every tick. */
-    public void clearFrameEvents() {
+    public void clearTickEvents() {
         dashPressed    = false;
         actionPressed  = false;
         actionReleased = false;
